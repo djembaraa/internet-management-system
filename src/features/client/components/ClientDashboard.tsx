@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import {
     LineChart,
     Line,
@@ -255,7 +255,7 @@ export default function ClientDashboard() {
                             </g>
                         ))}
 
-                        {/* ── Left Node: AiS Internet ── */}
+                        {/* ── Left Node: DJ Internet ── */}
                         <g style={{ animation: `${isDark ? 'nodeBreath' : 'nodeBreathLight'} 3s ease-in-out infinite` }}>
                             {/* Pulse rings */}
                             <circle cx="100" cy="70" fill="none" stroke={c.nodeStroke} strokeWidth="1">
@@ -283,7 +283,7 @@ export default function ClientDashboard() {
                             <line x1="87" y1="61" x2="113" y2="61" stroke={c.globeStroke} strokeWidth="0.6" opacity="0.6" />
                             <line x1="87" y1="79" x2="113" y2="79" stroke={c.globeStroke} strokeWidth="0.6" opacity="0.6" />
                         </g>
-                        <text x="100" y="120" textAnchor="middle" fill={c.labelText} style={{ fontSize: '11px', fontWeight: 600 }}>(AiS)</text>
+                        <text x="100" y="120" textAnchor="middle" fill={c.labelText} style={{ fontSize: '11px', fontWeight: 600 }}>(DJ)</text>
 
                         {/* ── Center ping badge ── */}
                         <g>

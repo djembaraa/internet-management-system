@@ -1,4 +1,4 @@
-﻿import { useState, useRef } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { Lock, User, Eye, EyeOff, X, ShieldCheck, Phone, SendHorizonal } from "lucide-react";
@@ -122,8 +122,8 @@ export default function Login() {
         {/* Logo */}
         <div className="text-center mb-8">
           <img
-            src="/ais-logo.png"
-            alt="AiS Logo"
+            src="/dj-logo.jpg"
+            alt="DJ IMS Logo"
             className="mx-auto h-16 w-auto object-contain"
           />
         </div>
@@ -266,7 +266,7 @@ export default function Login() {
         </div>
 
         <p className="text-center text-xs text-slate-400 dark:text-slate-600 mt-6">
-          © 2026 AltaFocus Integrator System
+          © 2026 DJ Internet Management System
         </p>
       </div>
 

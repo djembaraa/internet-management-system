@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Wifi, Lock, RotateCcw, Power, AlertTriangle, X } from "lucide-react";
 
 export default function ClientNetwork() {
-    const [ssid, setSsid] = useState("AiS-Network-5G");
+    const [ssid, setSsid] = useState("DJ-Network-5G");
     const [password, setPassword] = useState("mypassword123");
     const [warningAction, setWarningAction] = useState<"reboot" | "restart" | null>(null);
 

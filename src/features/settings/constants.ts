@@ -22,6 +22,6 @@ export const MOCK_BANKS: PaymentGatewayBank[] = [
 ];
 
 export const MOCK_MOOTA: MootaAccount = {
-  fullname: "AltaFocus",
+  fullname: "DJ Internet",
   email: "finance@altafocus.id",
 };

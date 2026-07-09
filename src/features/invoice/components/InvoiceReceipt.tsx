@@ -167,7 +167,7 @@ export default function InvoiceReceipt({ data, onClose }: Props) {
           {/* ── Header ── */}
           <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between p-5 sm:p-8 pb-5 sm:pb-6 gap-4 sm:gap-0 text-center sm:text-left border-b-4 border-[#155b96]">
             <img
-              src="/ais-logo.png"
+              src="/dj-logo.jpg"
               alt="Logo"
               className="h-12 sm:h-14 w-auto object-contain"
             />

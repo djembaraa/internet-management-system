@@ -53,7 +53,7 @@ export default function TemplateInvoiceSettings() {
       taxPercent: form.taxPercent,
       kodeUnik: 123,
       status: "Unpaid",
-      instruction: form.instruction || "Silakan transfer ke rekening BCA 8161700053 a/n AIS Internet",
+      instruction: form.instruction || "Silakan transfer ke rekening BCA 8161700053 a/n DJ Internet",
       memo: form.memo || "Terima kasih atas kepercayaan Anda.",
       signatureName: form.signatureName || form.companyName,
     });

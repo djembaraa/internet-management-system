@@ -1,73 +1,73 @@
-# AiS — AltaFocus Integrator System
+# DJ Internet Management System (DJ-IMS)
 
-> Sistem manajemen jaringan internet berbasis web untuk ISP (Internet Service Provider).  
-> Dibangun menggunakan **React 19**, **TypeScript**, **Vite**, dan **Tailwind CSS 4**.
+> Web-based internet network management dashboard for Internet Service Providers (ISP).  
+> Built with **React 19**, **TypeScript**, **Vite**, and **Tailwind CSS 4**.
 
 ---
 
-## 📋 Daftar Isi
+## 📋 Table of Contents
 
-- [Tentang Aplikasi](#tentang-aplikasi)
+- [About the Application](#about-the-application)
 - [Tech Stack](#tech-stack)
-- [Persyaratan Sistem](#persyaratan-sistem)
-- [Instalasi & Menjalankan](#instalasi--menjalankan)
-- [Akun Demo](#akun-demo)
-- [Struktur Folder](#struktur-folder)
-- [Fitur Aplikasi](#fitur-aplikasi)
+- [System Requirements](#system-requirements)
+- [Installation & Setup](#installation--setup)
+- [Demo Accounts](#demo-accounts)
+- [Folder Structure](#folder-structure)
+- [Features](#features)
 - [Scripts](#scripts)
-- [Catatan Pengembangan](#catatan-pengembangan)
+- [Development Notes](#development-notes)
 
 ---
 
-## Tentang Aplikasi
+## About the Application
 
-AiS (AltaFocus Integrator System) adalah dashboard manajemen jaringan internet yang menyediakan:
+DJ Internet Management System is a robust network management dashboard providing:
 
-- **Dashboard Admin** — Ringkasan statistik pelanggan, koneksi, dan revenue
-- **Dashboard Client** — Status koneksi, info perangkat, dan traffic monitoring
-- **Monitoring** — ONU/OLT monitoring dan traffic PPPoE client
-- **Manajemen Router, PPPoE, Hotspot** — CRUD profil dan data pelanggan
-- **Billing & Invoice** — Pengelolaan tagihan dan pembayaran
-- **Accounting** — Laporan keuangan, pemasukan/pengeluaran
-- **Ticket Support** — Sistem tiket untuk client
-- **Notifikasi** — Integrasi Telegram dan WhatsApp gateway
+- **Admin Dashboard** — Statistical overview of clients, connections, and revenue.
+- **Client Dashboard** — Connection status, device information, and traffic monitoring.
+- **Monitoring** — ONU/OLT monitoring and PPPoE client traffic.
+- **Router, PPPoE, Hotspot Management** — CRUD operations for profiles and client data.
+- **Billing & Invoice** — Invoice management and payment tracking.
+- **Accounting** — Financial reports, income/expense tracking.
+- **Ticket Support** — Client support ticketing system.
+- **Notifications** — Telegram and WhatsApp gateway integrations.
 
-Aplikasi memiliki **2 role**: **Admin** dan **Client**, masing-masing dengan navigasi dan dashboard yang berbeda.
+The application has **2 primary roles**: **Admin** and **Client**, each with distinct navigation and dashboard views.
 
 ---
 
 ## Tech Stack
 
-| Kategori        | Teknologi                           |
+| Category        | Technology                          |
 | --------------- | ----------------------------------- |
 | Framework       | React 19                            |
-| Bahasa          | TypeScript 5.9                      |
+| Language        | TypeScript 5.9                      |
 | Build Tool      | Vite 7                              |
 | Styling         | Tailwind CSS 4                      |
 | State Management| Zustand 5                           |
 | Routing         | React Router DOM 7                  |
 | Charts          | Recharts 3                          |
 | Icons           | Lucide React                        |
-| Form            | React Hook Form + Zod              |
+| Form            | React Hook Form + Zod               |
 | HTTP Client     | Axios                               |
 
 ---
 
-## Persyaratan Sistem
+## System Requirements
 
-- **Node.js** >= 18.x (disarankan v20+)
-- **npm** >= 9.x atau **yarn** >= 1.22
+- **Node.js** >= 18.x (v20+ recommended)
+- **npm** >= 9.x or **yarn** >= 1.22
 - **Git**
 
 ---
 
-## Instalasi & Menjalankan
+## Installation & Setup
 
 ### 1. Clone Repository
 
 ```bash
-git clone https://github.com/djembaraa/ais-internet-management-system.git
-cd ais-internet-management-system
+git clone https://github.com/djembaraa/internet-management-system.git
+cd internet-management-system
 ```
 
 ### 2. Install Dependencies
@@ -76,25 +76,25 @@ cd ais-internet-management-system
 npm install
 ```
 
-### 3. Jalankan Development Server
+### 3. Run Development Server
 
 ```bash
 npm run dev
 ```
 
-Aplikasi akan berjalan di:
+The application will be running at:
 
 ```
 http://localhost:5173
 ```
 
-### 4. Build untuk Production
+### 4. Build for Production
 
 ```bash
 npm run build
 ```
 
-Hasil build akan berada di folder `dist/`.
+The build output will be available in the `dist/` folder.
 
 ### 5. Preview Production Build
 
@@ -104,9 +104,9 @@ npm run preview
 
 ---
 
-## Akun Demo
+## Demo Accounts
 
-Aplikasi saat ini menggunakan **data dummy** (mock data). Gunakan kredensial berikut untuk login:
+The application currently utilizes **dummy data** (mock data). Use the following credentials to log in:
 
 ### 🔑 Admin
 
@@ -115,7 +115,7 @@ Aplikasi saat ini menggunakan **data dummy** (mock data). Gunakan kredensial ber
 | Username | `admin`    |
 | Password | `admin123` |
 
-> **Admin** memiliki akses penuh ke semua fitur: Dashboard, Monitoring, Router, PPPoE, Hotspot, Billing, Telegram, Accounting, WhatsApp, Log, dan Ticket.
+> **Admin** has full access to all features: Dashboard, Monitoring, Router, PPPoE, Hotspot, Billing, Telegram, Accounting, WhatsApp, Log, and Tickets.
 
 ### 🔑 Client
 
@@ -124,11 +124,11 @@ Aplikasi saat ini menggunakan **data dummy** (mock data). Gunakan kredensial ber
 | Username | `client`    |
 | Password | `client123` |
 
-> **Client** hanya melihat: Dashboard (status koneksi), Invoice, Kelola Jaringan, dan Ticket.
+> **Client** only views: Dashboard (connection status), Invoices, Network Management, and Tickets.
 
 ---
 
-## Struktur Folder
+## Folder Structure
 
 ```
 src/
@@ -149,122 +149,81 @@ src/
 │   └── api.ts                      # Axios instance / API config
 │
 └── features/
-    ├── auth/                       # Autentikasi
-    │   ├── components/Login.tsx    # Halaman login (Admin & Client)
-    │   └── store/authStore.ts      # Auth state (Zustand + persist)
-    │
+    ├── auth/                       # Authentication
     ├── dashboard/                  # Admin dashboard
-    │   └── Dashboard.tsx
-    │
     ├── client/                     # Client-specific pages
-    │   └── components/
-    │       ├── ClientDashboard.tsx  # Status koneksi + info perangkat + chart
-    │       ├── ClientInvoice.tsx    # Daftar invoice client
-    │       ├── ClientNetwork.tsx    # Kelola jaringan
-    │       └── ClientTicket.tsx     # Ticket support client
-    │
-    ├── monitoring/                 # Monitoring ONU/OLT & Traffic
-    │   └── components/
-    │       ├── MonitoringPage.tsx   # Tab ONU + OLT
-    │       └── TrafficPppoeClientPage.tsx
-    │
+    ├── monitoring/                 # ONU/OLT & Traffic Monitoring
     ├── router/                     # Router management + data layer
-    │   ├── components/RouterList.tsx
-    │   ├── types.ts                # Semua TypeScript interfaces
-    │   └── constants.ts            # Semua mock/dummy data
-    │
     ├── pppoe/                      # PPPoE management
-    │   └── components/
-    │       ├── PppoeProfileList.tsx
-    │       └── PppoeClientList.tsx
-    │
     ├── hotspot/                    # Hotspot management
-    │   └── components/
-    │       ├── HotspotProfileList.tsx
-    │       ├── HotspotVoucherList.tsx
-    │       └── HotspotVoucherEditor.tsx
-    │
     ├── invoice/                    # Billing / Invoice
-    │   └── components/InvoiceList.tsx
-    │
-    ├── accounting/                 # Accounting / Laporan keuangan
-    │   └── components/AccountingPage.tsx
-    │
+    ├── accounting/                 # Accounting / Financial reports
     ├── telegram/                   # Telegram integration
-    │   └── components/TelegramSettings.tsx
-    │
     ├── whatsapp/                   # WhatsApp gateway
-    │   └── components/WhatsappGateway.tsx
-    │
     ├── log/                        # Activity log
-    │   └── components/LogList.tsx
-    │
     ├── ticket/                     # Ticket support (admin view)
-    │   └── components/TicketList.tsx
-    │
     └── account/                    # My account / profile
-        └── components/MyAccount.tsx
 ```
 
 ---
 
-## Fitur Aplikasi
+## Features
 
 ### Admin Panel
 
-| Menu         | Deskripsi |
-| ------------ | --------- |
-| Dashboard    | Overview statistik: total client, online, revenue, chart traffic |
-| Monitoring   | ONU table + OLT table (tab), Traffic PPPoE Client |
-| Router       | Daftar router dengan status dan uptime |
-| PPPoE        | PPPoE Profile & PPPoE Client management |
-| Hotspot      | Hotspot Profile, Voucher list, Voucher editor |
-| Billing      | Daftar invoice dengan status pembayaran |
-| Telegram     | Konfigurasi bot Telegram untuk notifikasi |
-| Accounting   | Laporan keuangan: voucher terjual, invoice, pemasukan/pengeluaran, margin |
-| WhatsApp     | WhatsApp gateway configuration |
-| Log          | Activity log sistem |
-| Ticket       | Daftar ticket support dari client |
+| Menu         | Description |
+| ------------ | ----------- |
+| Dashboard    | Statistical overview: total clients, online status, revenue, traffic charts. |
+| Monitoring   | ONU and OLT tables, PPPoE Client Traffic. |
+| Router       | List of routers including connection status and uptime. |
+| PPPoE        | PPPoE Profile and Client management. |
+| Hotspot      | Hotspot Profiles, Voucher list, and Voucher editor. |
+| Billing      | Invoice list and payment statuses. |
+| Telegram     | Telegram bot configuration for notifications. |
+| Accounting   | Financial reports: vouchers sold, invoices, income/expenses, margin. |
+| WhatsApp     | WhatsApp gateway configurations. |
+| Log          | System activity logs. |
+| Ticket       | Support tickets submitted by clients. |
 
 ### Client Panel
 
-| Menu            | Deskripsi |
-| --------------- | --------- |
-| Dashboard       | Status koneksi (AiS ↔ Bras Server), info perangkat, traffic chart |
-| Invoice         | Riwayat tagihan dengan status pembayaran |
-| Kelola Jaringan | Informasi perangkat jaringan |
-| Ticket          | Buat dan pantau ticket support (limit 3/hari) |
+| Menu            | Description |
+| --------------- | ----------- |
+| Dashboard       | Connection status, device information, traffic charts. |
+| Invoice         | Billing history and payment status. |
+| Network Info    | Network device information. |
+| Ticket          | Create and track support tickets (limit 3/day). |
 
 ---
 
 ## Scripts
 
-| Perintah           | Fungsi |
-| ------------------ | ------ |
-| `npm run dev`      | Jalankan development server (HMR) |
-| `npm run build`    | Build untuk production |
+| Command            | Function |
+| ------------------ | -------- |
+| `npm run dev`      | Start development server (HMR) |
+| `npm run build`    | Build for production |
 | `npm run preview`  | Preview production build |
-| `npm run lint`     | Jalankan ESLint |
+| `npm run lint`     | Run ESLint |
 
 ---
 
-## Catatan Pengembangan
+## Development Notes
 
-### Data Dummy
+### Dummy Data
 
-Seluruh data saat ini menggunakan **mock data** yang tersimpan di:
+All current data uses **mock data** stored in:
 
 ```
 src/features/router/constants.ts
 ```
 
-File ini berisi semua konstanta dummy untuk: router, PPPoE, hotspot, invoice, log, ticket, ONU, OLT, traffic, accounting, dan data client.
+This file contains all dummy constants for: routers, PPPoE, hotspot, invoices, logs, tickets, ONU, OLT, traffic, accounting, and client data.
 
-Untuk mengganti ke data real dari API, cukup replace import data dari `constants.ts` dengan fetch dari `services/api.ts`.
+To switch to real API data, replace the imported data from `constants.ts` with fetches from `services/api.ts` or Supabase.
 
 ### Type Definitions
 
-Semua TypeScript interfaces terdefinisi di:
+All TypeScript interfaces are defined in:
 
 ```
 src/features/router/types.ts
@@ -272,16 +231,16 @@ src/features/router/types.ts
 
 ### Dark Mode
 
-Aplikasi mendukung **dark mode** secara penuh. Toggle tersedia di header. State disimpan di `localStorage` via Zustand persist (`themeStore.ts`).
+The application fully supports **dark mode**. A toggle is available in the header. State is persisted in `localStorage` via Zustand (`themeStore.ts`).
 
-### Navigasi Role-Based
+### Role-Based Navigation
 
-Layout secara otomatis menampilkan menu berbeda berdasarkan role user:
-- **Admin** → 11 menu navigasi
-- **Client** → 4 menu navigasi (Dashboard, Invoice, Kelola Jaringan, Ticket)
+The layout automatically displays distinct menus based on the user's role:
+- **Admin/Root** → 11 navigation menus
+- **Client** → 4 navigation menus (Dashboard, Invoice, Network Info, Ticket)
 
 ---
 
-## 📄 Lisensi
+## 📄 Documentation
 
-Private — AltaFocus Team.
+For further architectural and technical details, please refer to our [Single Source of Truth (SOT)](docs/SOT.md).

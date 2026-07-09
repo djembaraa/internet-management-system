@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Home,
@@ -224,8 +224,8 @@ export default function Layout() {
           {/* Logo */}
           <Link to="/" className="flex items-center select-none">
             <img
-              src="/ais-logo.png"
-              alt="AiS Logo"
+              src="/dj-logo.jpg"
+              alt="DJ IMS Logo"
               className="h-8 w-auto object-contain"
             />
           </Link>
@@ -372,8 +372,8 @@ export default function Layout() {
         <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <img
-              src="/ais-logo.png"
-              alt="AiS Logo"
+              src="/dj-logo.jpg"
+              alt="DJ IMS Logo"
               className="h-7 w-auto object-contain"
             />
           </div>

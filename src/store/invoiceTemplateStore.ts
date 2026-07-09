@@ -22,12 +22,12 @@ interface InvoiceTemplateStore {
 }
 
 const DEFAULT_TEMPLATE: InvoiceTemplate = {
-  companyName: "AIS Internet",
+  companyName: "DJ Internet",
   companyTagline: "Internet Service Provider",
   companyOffice: "Jl. Contoh No. 123",
   companyPhone: "081234567890",
-  companyWebsite: "ais-internet.com",
-  companyEmail: "admin@ais-internet.com",
+  companyWebsite: "dj-internet.com",
+  companyEmail: "admin@dj-internet.com",
   signatureName: "",
   instruction: "",
   memo: "",
