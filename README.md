@@ -50,6 +50,18 @@ The application has **2 primary roles**: **Admin** and **Client**, each with dis
 | Icons           | Lucide React                        |
 | Form            | React Hook Form + Zod               |
 | HTTP Client     | Axios                               |
+| Backend & DB    | Supabase (Backend-as-a-Service)     |
+
+---
+
+## Backend Architecture (Serverless Approach)
+
+Unlike traditional web applications that use a separate backend layer (e.g., Express.js or NestJS) to handle APIs, **DJ Internet Management System** utilizes a **Serverless/Backend-as-a-Service (BaaS) architecture with Supabase**.
+
+### Why no separate backend?
+1. **Direct Integration:** By using `@supabase/supabase-js`, the frontend can securely and directly interact with the database and authentication services without the need for an intermediate API layer.
+2. **Simplified Deployment:** This architecture removes the burden of deploying and maintaining a separate Node.js server. The entire application (Frontend + BaaS) can be easily deployed to platforms like Vercel or Netlify with zero configuration.
+3. **Real-time Capabilities:** Supabase natively supports real-time subscriptions over WebSockets, which is perfect for an ISP dashboard that requires live monitoring (e.g., traffic monitoring, ticket updates).
 
 ---
 
