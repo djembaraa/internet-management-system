@@ -10,7 +10,6 @@ export default function Login() {
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
-  const { login } = useAuthStore();
 
   // Register modal state
   const [showRegister, setShowRegister] = useState(false);
@@ -97,7 +96,8 @@ export default function Login() {
     setError("");
 
     try {
-      const { data, error: authError } = await import("../../../services/supabase").then(m => m.supabase).auth.signInWithPassword({
+      const { supabase } = await import("../../../services/supabase");
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
         email: username, // Assuming 'username' state holds the email for Supabase Auth
         password: password,
       });

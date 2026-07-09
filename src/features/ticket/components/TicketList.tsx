@@ -36,15 +36,12 @@ const TICKET_COLS: ColDef[] = [
 
 export default function TicketList() {
   const [tickets, setTickets] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
   const fetchTickets = async () => {
-    setIsLoading(true);
     const { data, error } = await supabase.from("tickets").select("*").order("last_update", { ascending: false });
     if (!error && data) {
       setTickets(data);
     }
-    setIsLoading(false);
   };
 
   useEffect(() => {
@@ -254,7 +251,7 @@ export default function TicketList() {
       </div>
 
       <div className="overflow-x-auto">
-        {MOCK_TICKETS.length === 0 ? (
+        {tickets.length === 0 ? (
           <EmptyState />
         ) : (
           <table className="w-full text-left text-[13px] whitespace-nowrap table-tight">

@@ -246,11 +246,11 @@ export default function Layout() {
             className="hidden sm:flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#155b96] to-blue-400 flex items-center justify-center text-white text-xs font-bold">
-              {(user?.username?.[0] || "N").toUpperCase()}
+              {(user?.email?.[0] || "N").toUpperCase()}
             </div>
             <div className="text-right">
               <p className="text-sm font-semibold leading-tight text-slate-700 dark:text-slate-100">
-                {user?.username || "nizar"}
+                {user?.email || "nizar"}
               </p>
               <p className="text-[11px] text-slate-400 dark:text-slate-100 capitalize leading-tight">
                 {isClient
@@ -391,11 +391,11 @@ export default function Layout() {
           className="mx-4 mt-4 mb-2 flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/50 hover:border-[#155b96]/30 transition-colors"
         >
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#155b96] to-blue-400 flex items-center justify-center text-white text-sm font-bold shrink-0">
-            {(user?.username?.[0] || "N").toUpperCase()}
+            {(user?.email?.[0] || "N").toUpperCase()}
           </div>
           <div className="min-w-0">
             <p className="text-sm font-semibold text-slate-700 dark:text-slate-100 truncate">
-              {user?.username || "nizar"}
+              {user?.email || "nizar"}
             </p>
             <p className="text-[11px] text-slate-400 capitalize">
               {user?.role || "Admin"}

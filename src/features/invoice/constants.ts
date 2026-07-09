@@ -29,12 +29,12 @@ export interface ManualInvoiceItem {
 
 export const MOCK_INVOICE_TABLE: InvoiceTableItem[] = [
   {
-    id: "INV-260201",
-    client: "Budi Susanto",
-    description: "Tagihan Internet Paket 20Mbps",
-    date: "2026-02-25",
+    id: "INV-2024-001",
+    client: "Budi Santoso",
+    description: "Tagihan Internet Bulan April",
+    date: "12 Apr 2024",
     amount: "Rp 250.000",
-    status: "Unpaid",
+    status: "Paid",
   },
   {
     id: "INV-260202",

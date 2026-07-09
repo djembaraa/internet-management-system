@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  dj-ims-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dj-ims-app
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    # If you need to pass Supabase keys at build time, you can uncomment below
+    # environment:
+    #   - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
+    #   - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}

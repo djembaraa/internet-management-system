@@ -1,6 +1,6 @@
 import { create } from "zustand";
-import { supabase } from "../../services/supabase";
-import type { User, Session } from "@supabase/supabase-js";
+import { supabase } from "../../../services/supabase";
+import type { User, Session, AuthChangeEvent } from "@supabase/supabase-js";
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -37,7 +37,7 @@ export const useAuthStore = create<AuthState>()((set) => ({
 }));
 
 // Set up listener for auth state changes
-supabase.auth.onAuthStateChange((_event, session) => {
+supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
   const user = session?.user || null;
   useAuthStore.getState().setAuth(session, user);
 });

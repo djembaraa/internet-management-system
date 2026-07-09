@@ -48,14 +48,11 @@ export default function InvoiceList() {
   );
 
   const [invoices, setInvoices] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     fetchInvoices();
   }, []);
 
-  const fetchInvoices = async () => {
-    setIsLoading(true);
     const { data, error } = await supabase.from("invoices").select("*").order("created_at", { ascending: false });
     if (!error && data) {
       const mapped = data.map((d: any) => ({
@@ -68,7 +65,6 @@ export default function InvoiceList() {
       }));
       setInvoices(mapped);
     }
-    setIsLoading(false);
   };
 
   const subtotal = invoices.reduce(
@@ -328,7 +324,7 @@ export default function InvoiceList() {
 
       <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-[13px] text-slate-500 dark:text-slate-100">
         <div>
-          Showing 1 to {MOCK_INVOICES.length} of {MOCK_INVOICES.length} entry
+          Showing 1 to {invoices.length} of {invoices.length} entry
         </div>
         <div className="flex items-center gap-1">
           <button className="px-2.5 py-1 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-400 cursor-not-allowed">

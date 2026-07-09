@@ -43,31 +43,26 @@ const ROUTER_SCRIPTS: Record<string, Record<string, string>> = {
 };
 
 export default function RouterList() {
-  const [routers, setRouters] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [routers, setRouters] = useState<Router[]>([]);
 
   useEffect(() => {
     fetchRouters();
   }, []);
 
   const fetchRouters = async () => {
-    setIsLoading(true);
     const { data, error } = await supabase.from("routers").select("*").order("created_at", { ascending: false });
     if (!error && data) {
-      // Map to the existing Router type structure for UI compatibility
-      const mapped = data.map(d => ({
-        id: d.id,
+      const formattedData: Router[] = data.map((d: any) => ({
+        id: String(d.id),
         name: d.name,
-        secret: d.secret,
-        vpn: {
-          ip: d.vpn_ip || "",
-          reserved_ip: d.vpn_reserved_ip || "",
-          is_connected: d.is_connected || 0
-        }
+        ip: d.ip_address,
+        port: d.api_port,
+        user: d.username,
+        pass: d.password,
+        vpn: d.vpn_status ? { ip: d.ip_address, is_connected: true } : undefined,
       }));
-      setRouters(mapped);
+      setRouters(formattedData);
     }
-    setIsLoading(false);
   };
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -187,19 +182,19 @@ export default function RouterList() {
         items={[
           {
             label: "Total Router",
-            value: MOCK_ROUTERS.length,
+            value: routers.length,
             icon: <Server size={18} />,
             color: "blue",
           },
           {
             label: "Connected",
-            value: MOCK_ROUTERS.filter((r) => r.vpn?.is_connected).length,
+            value: routers.filter((r) => r.vpn?.is_connected).length,
             icon: <Wifi size={18} />,
             color: "emerald",
           },
           {
             label: "Disconnected",
-            value: MOCK_ROUTERS.filter((r) => !r.vpn?.is_connected).length,
+            value: routers.filter((r) => !r.vpn?.is_connected).length,
             icon: <WifiOff size={18} />,
             color: "red",
           },

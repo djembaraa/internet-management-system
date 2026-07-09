@@ -33,19 +33,16 @@ import type { PppoeProfile } from "../../router/types";
 
 export default function PppoeProfileList() {
   const [profiles, setProfiles] = useState<PppoeProfile[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     fetchProfiles();
   }, []);
 
   const fetchProfiles = async () => {
-    setIsLoading(true);
     const { data, error } = await supabase.from("pppoe_profiles").select("*").order("created_at", { ascending: false });
     if (!error && data) {
       setProfiles(data);
     }
-    setIsLoading(false);
   };
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -232,10 +229,10 @@ export default function PppoeProfileList() {
                 className="border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 outline-none focus:border-[#155b96] text-[13px] bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-100"
               >
                 <option value="">Semua</option>
-                {[...new Set(MOCK_PPPOE_PROFILES.map((p) => p.uniq_id))].map(
+                {[...new Set(profiles.map((p) => p.uniq_id))].map(
                   (g) => (
-                    <option key={g} value={g}>
-                      {g}
+                    <option key={String(g)} value={String(g)}>
+                      {String(g)}
                     </option>
                   ),
                 )}

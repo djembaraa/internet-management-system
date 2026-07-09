@@ -39,14 +39,12 @@ const PPPOE_CLIENT_COLS: ColDef[] = [
 
 export default function PppoeClientList() {
   const [clients, setClients] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     fetchClients();
   }, []);
 
   const fetchClients = async () => {
-    setIsLoading(true);
     // Joining with pppoe_profiles to get the profile name
     const { data, error } = await supabase
       .from("pppoe_clients")
@@ -64,7 +62,6 @@ export default function PppoeClientList() {
       }));
       setClients(mapped);
     }
-    setIsLoading(false);
   };
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -224,32 +221,32 @@ export default function PppoeClientList() {
         items={[
           {
             label: "Total Users",
-            value: MOCK_CLIENTS.length,
+            value: clients.length,
             icon: <Users size={18} />,
             color: "blue",
           },
           {
             label: "Connected",
-            value: MOCK_CLIENTS.filter((c) => c.status === "connected").length,
+            value: clients.filter((c) => c.status === "connected").length,
             icon: <UserCheck size={18} />,
             color: "emerald",
           },
           {
             label: "Disconnected",
-            value: MOCK_CLIENTS.filter((c) => c.status === "disconnected")
+            value: clients.filter((c) => c.status === "disconnected")
               .length,
             icon: <UserX size={18} />,
             color: "red",
           },
           {
             label: "Disable",
-            value: MOCK_CLIENTS.filter((c) => c.status === "disable").length,
+            value: clients.filter((c) => c.status === "disable").length,
             icon: <UserMinus size={18} />,
             color: "amber",
           },
           {
             label: "Expired",
-            value: MOCK_CLIENTS.filter((c) => c.status === "expired").length,
+            value: clients.filter((c) => c.status === "expired").length,
             icon: <UserX size={18} />,
             color: "red",
           },
