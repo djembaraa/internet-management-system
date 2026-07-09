@@ -27,58 +27,6 @@ const LOG_COLS: ColDef[] = [
   { key: "action", label: "Action", fixed: true },
 ];
 
-const LOG_DETAILS: Record<
-  string,
-  {
-    before: Record<string, string>;
-    after: Record<string, string>;
-    browser: {
-      ip: string;
-      userAgent: string;
-      execStart: string;
-      execEnd: string;
-      execTime: string;
-    };
-  }
-> = {
-  "1": {
-    before: {
-      fullname: "test",
-      username: "-",
-      serial: "INV-2025021472",
-      status: "unpaid",
-      outstanding: "no",
-    },
-    after: {
-      fullname: "test",
-      username: "-",
-      serial: "INV-2025021472",
-      status: "paid",
-      outstanding: "no",
-    },
-    browser: {
-      ip: "103.193.147.25",
-      userAgent:
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:144.0) Gecko/20100101 Firefox/144.0",
-      execStart: "15:40:40.012",
-      execEnd: "15:40:40.019",
-      execTime: "7.167 ms",
-    },
-  },
-  "2": {
-    before: { name: "-", ip: "-", status: "not exists" },
-    after: { name: "Mikrotik Baru", ip: "192.168.1.1", status: "active" },
-    browser: {
-      ip: "103.193.147.25",
-      userAgent:
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:144.0) Gecko/20100101 Firefox/144.0",
-      execStart: "04:05:47.001",
-      execEnd: "04:05:47.089",
-      execTime: "88.000 ms",
-    },
-  },
-};
-
 const DEFAULT_DETAIL = {
   before: { data: "(no previous state)" },
   after: { data: "(no changes recorded)" },
@@ -483,7 +431,11 @@ export default function LogList() {
       {/* ─── Log Detail Modal ─── */}
       {selectedLog &&
         (() => {
-          const detail = LOG_DETAILS[selectedLog.id] ?? DEFAULT_DETAIL;
+          const detail = {
+            before: selectedLog.data_before || DEFAULT_DETAIL.before,
+            after: selectedLog.data_after || DEFAULT_DETAIL.after,
+            browser: selectedLog.browser || DEFAULT_DETAIL.browser,
+          };
           return (
             <Modal
               isOpen={!!selectedLog}

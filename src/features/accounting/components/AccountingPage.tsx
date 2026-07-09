@@ -44,13 +44,13 @@ export default function AccountingPage() {
         setInvoices(invData);
       }
       
-      const { data: expData, error: expError } = await supabase.from('expenses').select('*').order('date', { ascending: false });
+      const { data: expData, error: expError } = await supabase.from('expenses').select('*').order('tanggal', { ascending: false });
       if (!expError && expData) {
         setExpenses(expData.map(e => ({
           ...e,
-          tanggal: new Date(e.date).toLocaleDateString(),
-          nominal: Number(e.amount),
-          deskripsi: e.description
+          tanggal_str: new Date(e.tanggal).toLocaleDateString(),
+          nominal: Number(e.nominal),
+          deskripsi: e.deskripsi
         })));
       }
 
@@ -271,7 +271,7 @@ export default function AccountingPage() {
                         {i + 1}
                       </td>
                       <td className="px-5 py-4 text-slate-500 dark:text-slate-400 tabular-nums text-[12px] font-medium">
-                        {e.tanggal}
+                        {e.tanggal_str}
                       </td>
                       <td className="px-5 py-4">
                         <span
@@ -509,10 +509,10 @@ export default function AccountingPage() {
           onSubmit={async (e) => {
             e.preventDefault();
             const { error } = await supabase.from('expenses').insert({
-              date: addDate,
+              tanggal: addDate,
               type: addType,
-              amount: Number(addAmount),
-              description: addDesc
+              nominal: Number(addAmount),
+              deskripsi: addDesc
             });
             if (!error) {
               setIsModalOpen(false);
@@ -521,13 +521,13 @@ export default function AccountingPage() {
               setAddAmount("");
               setAddDesc("");
               // Re-fetch expenses
-              const { data } = await supabase.from('expenses').select('*').order('date', { ascending: false });
+              const { data } = await supabase.from('expenses').select('*').order('tanggal', { ascending: false });
               if (data) {
                 setExpenses(data.map(exp => ({
                   ...exp,
-                  tanggal: new Date(exp.date).toLocaleDateString(),
-                  nominal: Number(exp.amount),
-                  deskripsi: exp.description
+                  tanggal_str: new Date(exp.tanggal).toLocaleDateString(),
+                  nominal: Number(exp.nominal),
+                  deskripsi: exp.deskripsi
                 })));
               }
             } else {

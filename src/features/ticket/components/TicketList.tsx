@@ -386,7 +386,7 @@ export default function TicketList() {
                     )}
                     {visibleCols["last_update"] !== false && (
                       <td className="px-5 py-3.5 text-slate-500 dark:text-slate-100 text-[12px]">
-                        {ticket.last_update}
+                        {ticket.last_update ? new Date(ticket.last_update).toLocaleDateString() : '-'}
                       </td>
                     )}
                     <td className="px-5 py-3.5">
@@ -395,7 +395,7 @@ export default function TicketList() {
                           variant="view" 
                           label="Open Chat"
                           onClick={() => {
-                            setSelectedTicket({ id: t.id, subject: t.subject });
+                            setSelectedTicket({ id: ticket.id, subject: ticket.subject });
                             setChatModalOpen(true);
                           }}
                         >
@@ -460,10 +460,17 @@ export default function TicketList() {
               return;
             }
 
-            // (Optional) Jika ada pesan pertama, langsung masukkan ke ticket_messages 
-            // Namun karena kita butuh ID tiket yang baru terbuat, 
-            // kita bisa melakukan select berantai atau mengandalkan RLS.
-            // Untuk demo ini, kita cukup membuat tiketnya dulu.
+            if (message) {
+              // get the new ticket id based on no_ticket
+              const { data: newTicket } = await supabase.from('tickets').select('id').eq('no_ticket', noTicket).single();
+              if (newTicket) {
+                await supabase.from('ticket_messages').insert({
+                  ticket_id: newTicket.id,
+                  sender_id: (await supabase.auth.getUser()).data.user?.id,
+                  message: message
+                });
+              }
+            }
             
             setIsModalOpen(false);
             resetForm();
