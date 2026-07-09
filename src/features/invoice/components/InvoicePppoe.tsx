@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Plus,
   Save,
@@ -12,16 +12,17 @@ import {
   CheckCircle,
   XCircle,
   Clock,
+  Loader2,
 } from "lucide-react";
 import { useInvoiceTemplateStore } from "../../../store/invoiceTemplateStore";
 import Modal from "../../../components/Modal";
 import FormLabel from "../../../components/FormLabel";
 import EmptyState from "../../../components/EmptyState";
-import { MOCK_PPPOE_INVOICES as MOCK_INVOICES } from "../constants";
 import PaginationControls from "../../../components/PaginationControls";
 import SummaryStats from "../../../components/SummaryStats";
 import ActionButton from "../../../components/ActionButton";
 import InvoiceReceipt, { type InvoiceReceiptData } from "./InvoiceReceipt";
+import { supabase } from "../../../services/supabase";
 
 // Helper for modern toggle switch
 function ToggleSwitch({
@@ -110,7 +111,35 @@ export default function InvoicePppoe() {
     null,
   );
 
-  const filtered = MOCK_INVOICES.filter(
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [clients, setClients] = useState<any[]>([]);
+
+  const fetchInvoices = async () => {
+    setLoading(true);
+    const { data: cData } = await supabase.from('profiles').select('*').eq('role', 'client');
+    if (cData) setClients(cData);
+
+    const { data, error } = await supabase
+      .from('invoices')
+      .select('*, profiles(username)')
+      .eq('type', 'PPPoE')
+      .order('created_at', { ascending: false });
+    
+    if (data) {
+      setInvoices(data.map(d => ({
+        ...d,
+        username: d.profiles?.username || '-'
+      })));
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchInvoices();
+  }, []);
+
+  const filtered = invoices.filter(
     (inv) =>
       searchTerm === "" ||
       inv.fullname.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -122,15 +151,15 @@ export default function InvoicePppoe() {
   const paginatedInvoices = filtered.slice(startIndex, startIndex + pageSize);
   const startItem = filtered.length === 0 ? 0 : startIndex + 1;
   const endItem = Math.min(startIndex + pageSize, filtered.length);
-  const totalInvoices = MOCK_INVOICES.length;
-  const paidCount = MOCK_INVOICES.filter((i) => i.status === "Paid").length;
-  const unpaidCount = MOCK_INVOICES.filter((i) => i.status === "Unpaid").length;
-  const partialCount = MOCK_INVOICES.filter(
+  const totalInvoices = invoices.length;
+  const paidCount = invoices.filter((i) => i.status === "Paid").length;
+  const unpaidCount = invoices.filter((i) => i.status === "Unpaid").length;
+  const partialCount = invoices.filter(
     (i) => i.status === "Partially Paid",
   ).length;
 
   const buildReceipt = (
-    inv: (typeof MOCK_INVOICES)[number],
+    inv: any,
   ): InvoiceReceiptData => ({
     companyName: template.companyName,
     companyTagline: template.companyTagline,
@@ -341,7 +370,13 @@ export default function InvoicePppoe() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {filtered.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan={8} className="py-12 text-center text-slate-500">
+                    <Loader2 className="animate-spin inline mr-2 text-[#155b96]" /> Loading invoices...
+                  </td>
+                </tr>
+              ) : filtered.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="py-8">
                     <EmptyState
@@ -425,9 +460,12 @@ export default function InvoicePppoe() {
                           <ActionButton
                             variant="delete"
                             label="Delete"
-                            onClick={() =>
-                              console.log("Delete PPPoE invoice:", inv)
-                            }
+                            onClick={async () => {
+                              if(window.confirm('Yakin hapus tagihan ini?')) {
+                                await supabase.from('invoices').delete().eq('id', inv.id);
+                                fetchInvoices();
+                              }
+                            }}
                           >
                             <Trash2 size={14} />
                           </ActionButton>
@@ -465,26 +503,27 @@ export default function InvoicePppoe() {
       >
         <form
           className="space-y-6"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            console.log("Add PPPoE invoice:", {
-              fullName,
-              draft,
-              tujukanPelanggan,
-              nomorPelanggan,
-              status,
-              contact,
-              email,
-              issuedDate,
-              dueDate,
-              downPayment,
-              repeated,
-              addTax,
-              taxPercent,
-              instruction,
-              memo,
-              lineItems,
+            const amount = lineItems.reduce((acc, it) => acc + (Number(it.harga)*Number(it.quantity) - Number(it.discount)), 0);
+            
+            const { error } = await supabase.from('invoices').insert({
+              client_id: tujukanPelanggan && nomorPelanggan ? nomorPelanggan : null,
+              fullname: fullName,
+              serial: `INV-${Date.now()}`,
+              amount: amount,
+              status: status,
+              type: 'PPPoE',
+              due_date: dueDate || null,
+              created_at: issuedDate ? new Date(issuedDate).toISOString() : undefined,
             });
+
+            if (error) {
+              alert("Gagal menyimpan invoice: " + error.message);
+              return;
+            }
+
+            fetchInvoices();
             setIsModalOpen(false);
             resetForm();
           }}
@@ -535,13 +574,16 @@ export default function InvoicePppoe() {
                   checked={tujukanPelanggan}
                   onChange={() => setTujukanPelanggan(!tujukanPelanggan)}
                 >
-                  <input
-                    type="text"
+                  <select
                     value={nomorPelanggan}
                     onChange={(e) => setNomorPelanggan(e.target.value)}
-                    placeholder="Pilih Nomor Pelanggan..."
-                    className={inputClasses}
-                  />
+                    className={selectClasses}
+                  >
+                    <option value="">Pilih Klien...</option>
+                    {clients.map(c => (
+                      <option key={c.id} value={c.id}>{c.full_name || c.username}</option>
+                    ))}
+                  </select>
                 </ExpandableToggle>
               </div>
 

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import {
     LineChart,
     Line,
@@ -8,8 +9,11 @@ import {
     Tooltip,
     ResponsiveContainer,
 } from "recharts";
+import { AlertCircle } from "lucide-react";
 import { MOCK_CLIENT_CONNECTION } from "../../router/constants";
 import { useThemeStore } from "../../../store/themeStore";
+import { supabase } from "../../../services/supabase";
+import { useAuthStore } from "../../auth/store/authStore";
 
 // Dummy traffic data for chart
 const trafficData = [
@@ -23,9 +27,26 @@ const trafficData = [
 ];
 
 export default function ClientDashboard() {
+    const { user, profile } = useAuthStore();
     const conn = MOCK_CLIENT_CONNECTION;
     const [range, setRange] = useState("1 Hour");
     const isDark = useThemeStore((s) => s.theme === "dark");
+
+    const [unpaidCount, setUnpaidCount] = useState(0);
+
+    useEffect(() => {
+        async function fetchUnpaid() {
+            if (!user?.id) return;
+            const { count } = await supabase
+                .from('invoices')
+                .select('*', { count: 'exact', head: true })
+                .eq('client_id', user.id)
+                .eq('status', 'Unpaid');
+            
+            if (count) setUnpaidCount(count);
+        }
+        fetchUnpaid();
+    }, [user]);
 
     const infoRows: [string, React.ReactNode][] = [
         [
@@ -51,7 +72,7 @@ export default function ClientDashboard() {
         ],
         [
             "Fullname",
-            <span className="text-slate-700 dark:text-slate-100">{conn.fullname}</span>,
+            <span className="text-slate-700 dark:text-slate-100">{profile?.full_name || user?.email}</span>,
         ],
         [
             "Paket / Layanan",
@@ -67,6 +88,27 @@ export default function ClientDashboard() {
 
     return (
         <div className="space-y-4">
+            {/* Unpaid Invoice Banner */}
+            {unpaidCount > 0 && (
+                <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800/50 rounded-xl p-4 flex items-center justify-between shadow-sm">
+                    <div className="flex items-center gap-3">
+                        <div className="bg-red-100 dark:bg-red-900/50 p-2 rounded-full text-red-600 dark:text-red-400">
+                            <AlertCircle size={20} />
+                        </div>
+                        <div>
+                            <h4 className="text-[14px] font-bold text-red-800 dark:text-red-300">Tagihan Belum Dibayar</h4>
+                            <p className="text-[13px] text-red-600 dark:text-red-400 mt-0.5">Anda memiliki {unpaidCount} tagihan yang menunggu pembayaran.</p>
+                        </div>
+                    </div>
+                    <Link
+                        to="/client/invoice"
+                        className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-[13px] font-medium transition-colors whitespace-nowrap"
+                    >
+                        Bayar Sekarang
+                    </Link>
+                </div>
+            )}
+
             {/* Connection Visualization */}
             {(() => {
                 // Theme-aware color palette
