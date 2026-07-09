@@ -46,7 +46,7 @@ export default function Login() {
   const [otpValues, setOtpValues] = useState<string[]>(Array(6).fill(""));
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  const handleRegisterNext = (e: React.FormEvent) => {
+  const handleRegisterNext = async (e: React.FormEvent) => {
     e.preventDefault();
     if (regPassword !== regConfirmPassword) {
       setRegError("Password dan konfirmasi password tidak cocok!");
@@ -54,8 +54,35 @@ export default function Login() {
     }
     setRegError("");
     setError("");
-    setOtpValues(Array(6).fill(""));
-    setShowOtp(true);
+    
+    try {
+      const { supabase } = await import("../../../services/supabase");
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: regEmail,
+        password: regPassword,
+        options: {
+          data: {
+            full_name: regFullname,
+            username: regUsername,
+            phone: regWhatsapp,
+            address: regAlamat,
+          },
+        },
+      });
+
+      if (signUpError) throw signUpError;
+      
+      // Jika berhasil, pendaftaran sukses
+      setRegError("Pendaftaran sukses! Silakan login (abaikan error merah ini, ini notif sukses sementara).");
+      setTimeout(() => {
+        setShowRegister(false);
+        setUsername(regEmail);
+        setPassword(regPassword);
+      }, 3000);
+      
+    } catch (err: any) {
+      setRegError(err.message || "Pendaftaran gagal");
+    }
   };
 
   const handleOtpChange = (index: number, value: string) => {

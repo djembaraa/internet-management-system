@@ -24,6 +24,8 @@ import FormLabel from "../../../components/FormLabel";
 import ActionButton from "../../../components/ActionButton";
 import SummaryStats from "../../../components/SummaryStats";
 import PaginationControls from "../../../components/PaginationControls";
+import TicketChatModal from "./TicketChatModal";
+import { MessageCircle } from "lucide-react";
 
 const TICKET_COLS: ColDef[] = [
   { key: "subject_person", label: "Subject Person" },
@@ -36,6 +38,12 @@ const TICKET_COLS: ColDef[] = [
 
 export default function TicketList() {
   const [tickets, setTickets] = useState<any[]>([]);
+  const [clients, setClients] = useState<any[]>([]);
+
+  const fetchClients = async () => {
+    const { data } = await supabase.from("profiles").select("id, full_name, username").eq("role", "client");
+    if (data) setClients(data);
+  };
 
   const fetchTickets = async () => {
     const { data, error } = await supabase.from("tickets").select("*").order("last_update", { ascending: false });
@@ -46,6 +54,7 @@ export default function TicketList() {
 
   useEffect(() => {
     fetchTickets();
+    fetchClients();
 
     // Set up real-time subscription
     const subscription = supabase
@@ -72,6 +81,10 @@ export default function TicketList() {
   // Filter state
   const [showFilter, setShowFilter] = useState(false);
   const [filterTicketStatus, setFilterTicketStatus] = useState("");
+
+  // Chat state
+  const [chatModalOpen, setChatModalOpen] = useState(false);
+  const [selectedTicket, setSelectedTicket] = useState<{ id: string; subject: string } | null>(null);
 
   type SortKey =
     | "subject_person"
@@ -378,8 +391,15 @@ export default function TicketList() {
                     )}
                     <td className="px-5 py-3.5">
                       <div className="flex justify-center gap-1">
-                        <ActionButton variant="view" label="View">
-                          <Search size={15} />
+                        <ActionButton 
+                          variant="view" 
+                          label="Open Chat"
+                          onClick={() => {
+                            setSelectedTicket({ id: t.id, subject: t.subject });
+                            setChatModalOpen(true);
+                          }}
+                        >
+                          <MessageCircle size={15} />
                         </ActionButton>
                         <ActionButton variant="edit" label="Edit">
                           <Edit size={15} />
@@ -417,16 +437,37 @@ export default function TicketList() {
       >
         <form
           className="space-y-5"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            console.log("New ticket:", {
-              issuedTo,
-              subject,
-              message,
-              attachments,
+            
+            // Dapatkan ID client dan namanya
+            const selectedClient = clients.find(c => c.id === issuedTo);
+            const clientName = selectedClient ? (selectedClient.full_name || selectedClient.username) : "Unknown Client";
+            
+            // Generate ticket number
+            const noTicket = `TKT-${new Date().getFullYear()}${(new Date().getMonth()+1).toString().padStart(2, '0')}${new Date().getDate().toString().padStart(2, '0')}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
+
+            const { error } = await supabase.from('tickets').insert({
+              no_ticket: noTicket,
+              client_id: issuedTo, // Assuming the dropdown holds client UUID
+              subject_person: clientName,
+              subject: subject,
+              status: 'Opened'
             });
+
+            if (error) {
+              alert("Gagal membuat tiket: " + error.message);
+              return;
+            }
+
+            // (Optional) Jika ada pesan pertama, langsung masukkan ke ticket_messages 
+            // Namun karena kita butuh ID tiket yang baru terbuat, 
+            // kita bisa melakukan select berantai atau mengandalkan RLS.
+            // Untuk demo ini, kita cukup membuat tiketnya dulu.
+            
             setIsModalOpen(false);
             resetForm();
+            fetchTickets();
           }}
         >
           {/* Issued To */}
@@ -442,9 +483,11 @@ export default function TicketList() {
                 <option value="" disabled>
                   Select Subject Person
                 </option>
-                <option>Budi Susanto</option>
-                <option>Siti Rahayu</option>
-                <option>Administrator</option>
+                {clients.map(client => (
+                  <option key={client.id} value={client.id}>
+                    {client.full_name || client.username}
+                  </option>
+                ))}
               </select>
               <svg
                 className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
@@ -530,6 +573,16 @@ export default function TicketList() {
           </div>
         </form>
       </Modal>
+
+      {/* Chat Modal */}
+      {selectedTicket && (
+        <TicketChatModal
+          isOpen={chatModalOpen}
+          onClose={() => setChatModalOpen(false)}
+          ticketId={selectedTicket.id}
+          ticketSubject={selectedTicket.subject}
+        />
+      )}
     </div>
   );
 }

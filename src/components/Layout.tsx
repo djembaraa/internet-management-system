@@ -23,6 +23,7 @@ import {
 import { clsx } from "clsx";
 import { useAuthStore } from "../features/auth/store/authStore";
 import { useThemeStore } from "../store/themeStore";
+import FloatingChat from "./FloatingChat";
 
 interface NavChild {
   name: string;
@@ -509,6 +510,9 @@ export default function Layout() {
       <main className="flex-1 p-4 md:p-6 max-w-[1600px] mx-auto w-full">
         <Outlet />
       </main>
+
+      {/* Global Floating Chat Widget */}
+      <FloatingChat />
     </div>
   );
 }
