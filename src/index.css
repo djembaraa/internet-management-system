@@ -1,0 +1,132 @@
+@import "tailwindcss";
+
+@variant dark (&:where(.dark, .dark *));
+
+/* ─── Design System Tokens ──────────────────── */
+@layer base {
+  :root {
+    --color-brand: #155b96;
+    --color-brand-hover: #0e4a7a;
+    --color-brand-light: #e8f4fd;
+    --radius-card: 0.75rem;
+    --radius-btn: 0.5rem;
+    --radius-input: 0.5rem;
+    --shadow-card:
+      0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);
+    --shadow-card-hover: 0 4px 12px -1px rgb(0 0 0 / 0.06);
+    --transition-base: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .dark {
+    --color-brand-light: #0c2d4a;
+    --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.2);
+    --shadow-card-hover: 0 4px 12px -1px rgb(0 0 0 / 0.3);
+  }
+
+  /* Smooth scroll, font smoothing */
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    .table-tight th,
+    .table-tight td {
+      padding-top: 0.45rem; /* 7.2px */
+      padding-bottom: 0.45rem; /* 7.2px */
+    }
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  /* Selection */
+  ::selection {
+    background-color: var(--color-brand);
+    color: #fff;
+  }
+
+  /* Focus ring utility */
+  *:focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 999px;
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    background: #334155;
+  }
+
+  /* Hide scrollbar utility */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ─── Animation Utilities ──────────────────── */
+@layer utilities {
+  /* Animation utilities for modals */
+  .animate-in {
+    animation: animate-in 0.2s ease-out;
+  }
+
+  .slide-in-from-bottom-4 {
+    --tw-enter-translate-y: 1rem;
+  }
+
+  .zoom-in-95 {
+    --tw-enter-scale: 0.95;
+  }
+
+  @keyframes animate-in {
+    from {
+      opacity: 0;
+      transform: translateY(var(--tw-enter-translate-y, 0))
+        scale(var(--tw-enter-scale, 1));
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+}
+
+/* Compact table utility to reduce row spacing for dense lists */
+@layer base {
+  .table-tight th {
+    padding-top: 0.4rem;
+    padding-bottom: 0.4rem;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  .table-tight td {
+    padding-top: 0.35rem;
+    padding-bottom: 0.35rem;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  /* Ensure checkboxes in table cells have comfortable spacing from adjacent text/columns */
+  table th input[type="checkbox"],
+  table td input[type="checkbox"] {
+    margin-right: 0.125rem; /* ~2px — make checkbox sit closer to the number */
+    vertical-align: middle;
+  }
+}
