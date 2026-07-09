@@ -53,6 +53,7 @@ export default function InvoiceList() {
     fetchInvoices();
   }, []);
 
+  const fetchInvoices = async () => {
     const { data, error } = await supabase.from("invoices").select("*").order("created_at", { ascending: false });
     if (!error && data) {
       const mapped = data.map((d: any) => ({
