@@ -1,12 +1,61 @@
-﻿import { useState } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
-import { MOCK_CLIENT_INVOICES } from "../../router/constants";
+import { useState, useEffect } from "react";
+import { ChevronDown, ChevronUp, Loader2 } from "lucide-react";
+import { supabase } from "../../../services/supabase";
+import { useAuthStore } from "../../auth/store/authStore";
 
 export default function ClientInvoice() {
-  const invoices = MOCK_CLIENT_INVOICES;
+  const { user } = useAuthStore();
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const formatRp = (n: number) => "Rp. " + n.toLocaleString("id-ID");
+  const formatRp = (n: number) => "Rp. " + Number(n).toLocaleString("id-ID");
+  const formatDate = (d: string) => {
+    if (!d) return "-";
+    return new Date(d).toLocaleDateString("id-ID", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric"
+    });
+  };
+
+  useEffect(() => {
+    async function fetchInvoices() {
+      if (!user?.id) return;
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from("invoices")
+          .select("*")
+          .eq("client_id", user.id)
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+        setInvoices(data || []);
+      } catch (err) {
+        console.error("Failed to fetch invoices", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchInvoices();
+  }, [user]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-40">
+        <Loader2 className="animate-spin text-slate-400" />
+      </div>
+    );
+  }
+
+  if (invoices.length === 0) {
+    return (
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-8 text-center">
+        <p className="text-slate-500 dark:text-slate-400">Belum ada tagihan.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
@@ -46,19 +95,19 @@ export default function ClientInvoice() {
                   {i + 1}
                 </td>
                 <td className="px-5 py-3.5 text-slate-700 dark:text-slate-100 font-medium max-w-md truncate">
-                  {inv.jenisLayanan}
+                  {inv.fullname || inv.type}
                 </td>
                 <td className="px-5 py-3.5 text-[#155b96] dark:text-blue-400 font-semibold">
-                  {inv.noInvoice}
+                  {inv.serial}
                 </td>
                 <td className="px-5 py-3.5 text-slate-500 dark:text-slate-100 text-[12px] tabular-nums">
-                  {inv.tanggalTerbit}
+                  {formatDate(inv.created_at)}
                 </td>
                 <td className="px-5 py-3.5 text-slate-500 dark:text-slate-100 text-[12px] tabular-nums">
-                  {inv.jatuhTempo}
+                  {formatDate(inv.due_date)}
                 </td>
                 <td className="px-5 py-3.5 font-semibold text-slate-700 dark:text-slate-100 tabular-nums">
-                  {formatRp(inv.total)}
+                  {formatRp(inv.amount)}
                 </td>
                 <td className="px-5 py-3.5">
                   <div className="flex justify-center">
@@ -99,11 +148,11 @@ export default function ClientInvoice() {
               >
                 <div className="flex-1 min-w-0">
                   <p className="text-[13px] text-[#155b96] dark:text-blue-400 font-semibold truncate">
-                    {inv.noInvoice}
+                    {inv.serial}
                   </p>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-[13px] font-semibold text-slate-700 dark:text-slate-100 tabular-nums">
-                      {formatRp(inv.total)}
+                      {formatRp(inv.amount)}
                     </span>
                     <span
                       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${
@@ -139,7 +188,7 @@ export default function ClientInvoice() {
                       Jenis Layanan / Item
                     </p>
                     <p className="text-[13px] text-slate-700 dark:text-slate-100 font-medium mt-0.5">
-                      {inv.jenisLayanan}
+                      {inv.fullname || inv.type}
                     </p>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
@@ -148,7 +197,7 @@ export default function ClientInvoice() {
                         Tanggal Terbit
                       </p>
                       <p className="text-[12px] text-slate-600 dark:text-slate-300 tabular-nums mt-0.5">
-                        {inv.tanggalTerbit}
+                        {formatDate(inv.created_at)}
                       </p>
                     </div>
                     <div>
@@ -156,7 +205,7 @@ export default function ClientInvoice() {
                         Jatuh Tempo
                       </p>
                       <p className="text-[12px] text-slate-600 dark:text-slate-300 tabular-nums mt-0.5">
-                        {inv.jatuhTempo}
+                        {formatDate(inv.due_date)}
                       </p>
                     </div>
                   </div>

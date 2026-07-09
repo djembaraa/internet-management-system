@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Save,
   Plus,
@@ -223,15 +223,15 @@ export default function MyAccount() {
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    {/* Username (readonly) */}
+                    {/* Username */}
                     <div>
-                      <FormLabel label="Username" />
+                      <FormLabel label="Username" required />
                       <input
                         type="text"
                         value={username}
-                        readOnly
-                        className={readonlyClasses}
-                        title="Username tidak dapat diubah"
+                        onChange={(e) => setUsername(e.target.value)}
+                        placeholder="Masukkan username"
+                        className={inputClasses}
                       />
                     </div>
                     {/* Full Name */}
@@ -346,6 +346,7 @@ export default function MyAccount() {
                         const { error } = await supabase
                           .from('profiles')
                           .update({
+                            username: username,
                             full_name: fullName,
                             phone: contact,
                             address: address,
