@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import {
   Plus,
   Send,
@@ -29,7 +29,8 @@ import Modal from "../../../components/Modal";
 import FormLabel from "../../../components/FormLabel";
 import ActionButton from "../../../components/ActionButton";
 import SummaryStats from "../../../components/SummaryStats";
-import { MOCK_INVOICE_TABLE as MOCK_INVOICES } from "../constants";
+import { supabase } from "../../../services/supabase";
+import { useEffect } from "react";
 import InvoiceReceipt, { type InvoiceReceiptData } from "./InvoiceReceipt";
 
 export default function InvoiceList() {
@@ -46,7 +47,31 @@ export default function InvoiceList() {
     initVisible(INVOICE_COLS),
   );
 
-  const subtotal = MOCK_INVOICES.reduce(
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchInvoices();
+  }, []);
+
+  const fetchInvoices = async () => {
+    setIsLoading(true);
+    const { data, error } = await supabase.from("invoices").select("*").order("created_at", { ascending: false });
+    if (!error && data) {
+      const mapped = data.map((d: any) => ({
+        id: d.serial,
+        client: d.fullname,
+        description: `Tagihan ${d.type}`,
+        date: d.due_date ? new Date(d.due_date).toLocaleDateString("id-ID") : "-",
+        amount: `Rp ${d.amount.toLocaleString("id-ID")}`,
+        status: d.status,
+      }));
+      setInvoices(mapped);
+    }
+    setIsLoading(false);
+  };
+
+  const subtotal = invoices.reduce(
     (sum, invoice) => sum + Number(invoice.amount.replace(/\D/g, "")),
     0,
   );
@@ -58,7 +83,7 @@ export default function InvoiceList() {
   };
 
   const openReceipt = (id: string) => {
-    const invoice = MOCK_INVOICES.find((item) => item.id === id);
+    const invoice = invoices.find((item) => item.id === id);
     if (!invoice) return;
     setViewInvoice({
       companyName: template.companyName,
@@ -115,19 +140,19 @@ export default function InvoiceList() {
         items={[
           {
             label: "Total Invoice",
-            value: MOCK_INVOICES.length,
+            value: invoices.length,
             icon: <FileText size={18} />,
             color: "blue",
           },
           {
             label: "Paid",
-            value: MOCK_INVOICES.filter((i) => i.status === "Paid").length,
+            value: invoices.filter((i) => i.status === "Paid").length,
             icon: <CheckCircle size={18} />,
             color: "emerald",
           },
           {
             label: "Unpaid",
-            value: MOCK_INVOICES.filter((i) => i.status === "Unpaid").length,
+            value: invoices.filter((i) => i.status === "Unpaid").length,
             icon: <AlertCircle size={18} />,
             color: "red",
           },
@@ -202,7 +227,7 @@ export default function InvoiceList() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {MOCK_INVOICES.map((inv) => (
+            {invoices.map((inv) => (
               <tr
                 key={inv.id}
                 className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors"

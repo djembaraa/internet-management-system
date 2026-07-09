@@ -92,28 +92,24 @@ export default function Login() {
     void code; // placeholder until API integration
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    // Dummy credential validation
-    if (isAdmin) {
-      if (username === "root" && password === "root123") {
-        login({ username: "root", role: "root" }, "mock-root-token");
-      } else if (username === "admin" && password === "admin123") {
-        login({ username: "admin", role: "admin" }, "mock-admin-token");
-      } else {
-        setError("Username atau password admin salah!");
-        return;
+    try {
+      const { data, error: authError } = await import("../../../services/supabase").then(m => m.supabase).auth.signInWithPassword({
+        email: username, // Assuming 'username' state holds the email for Supabase Auth
+        password: password,
+      });
+
+      if (authError) throw authError;
+
+      if (data.session) {
+        navigate("/");
       }
-    } else {
-      if (username !== "client" || password !== "client123") {
-        setError("Username atau password client salah!");
-        return;
-      }
-      login({ username: "client", role: "client" }, "mock-client-token");
+    } catch (err: any) {
+      setError(err.message || "Login failed");
     }
-    navigate("/");
   };
 
   return (
@@ -164,17 +160,17 @@ export default function Login() {
             {/* Username */}
             <div>
               <label className="block text-[13px] font-medium text-slate-700 dark:text-slate-100 mb-1.5">
-                Username
+                Email
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                   <User size={16} />
                 </div>
                 <input
-                  type="text"
+                  type="email"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Masukkan username"
+                  placeholder="Masukkan email"
                   className="w-full pl-10 pr-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-100 text-sm outline-none focus:border-[#155b96] focus:ring-2 focus:ring-[#155b96]/10 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 />
               </div>

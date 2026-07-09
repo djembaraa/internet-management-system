@@ -1,37 +1,49 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { supabase } from "../../services/supabase";
+import type { User, Session } from "@supabase/supabase-js";
 
 interface AuthState {
   isAuthenticated: boolean;
-  user: { username: string; role: string } | null;
-  token: string | null;
-  login: (userData: { username: string; role: string }, token: string) => void;
-  logout: () => void;
+  user: User | null;
+  session: Session | null;
+  role: string;
+  setAuth: (session: Session | null, user: User | null, role?: string) => void;
+  logout: () => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set) => ({
+export const useAuthStore = create<AuthState>()((set) => ({
+  isAuthenticated: false,
+  user: null,
+  session: null,
+  role: "client", // default role
+
+  setAuth: (session, user, role) =>
+    set({
+      isAuthenticated: !!session,
+      user,
+      session,
+      role: role || user?.user_metadata?.role || "client",
+    }),
+
+  logout: async () => {
+    await supabase.auth.signOut();
+    set({
       isAuthenticated: false,
       user: null,
-      token: null,
+      session: null,
+      role: "client",
+    });
+  },
+}));
 
-      login: (userData, token) =>
-        set({
-          isAuthenticated: true,
-          user: userData,
-          token: token,
-        }),
+// Set up listener for auth state changes
+supabase.auth.onAuthStateChange((_event, session) => {
+  const user = session?.user || null;
+  useAuthStore.getState().setAuth(session, user);
+});
 
-      logout: () =>
-        set({
-          isAuthenticated: false,
-          user: null,
-          token: null,
-        }),
-    }),
-    {
-      name: "ais-auth-storage",
-    },
-  ),
-);
+// Fetch initial session
+supabase.auth.getSession().then(({ data: { session } }) => {
+  const user = session?.user || null;
+  useAuthStore.getState().setAuth(session, user);
+});

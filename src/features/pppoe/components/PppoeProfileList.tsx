@@ -1,4 +1,5 @@
-﻿import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "../../../services/supabase";
 import {
   Plus,
   Edit,
@@ -25,13 +26,28 @@ const PPPOE_PROFILE_COLS: ColDef[] = [
   { key: "uniq_id", label: "Group" },
   { key: "action", label: "Action", fixed: true },
 ];
-import { MOCK_PPPOE_PROFILES } from "../../router/constants";
 import Modal from "../../../components/Modal";
 import FormLabel from "../../../components/FormLabel";
 import ConfirmDeleteModal from "../../../components/ConfirmDeleteModal";
 import type { PppoeProfile } from "../../router/types";
 
 export default function PppoeProfileList() {
+  const [profiles, setProfiles] = useState<PppoeProfile[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchProfiles();
+  }, []);
+
+  const fetchProfiles = async () => {
+    setIsLoading(true);
+    const { data, error } = await supabase.from("pppoe_profiles").select("*").order("created_at", { ascending: false });
+    if (!error && data) {
+      setProfiles(data);
+    }
+    setIsLoading(false);
+  };
+
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [visibleCols, setVisibleCols] = useState(() =>
@@ -79,7 +95,7 @@ export default function PppoeProfileList() {
   const [showFilter, setShowFilter] = useState(false);
   const [filterGroup, setFilterGroup] = useState("");
 
-  const filtered = MOCK_PPPOE_PROFILES.filter(
+  const filtered = profiles.filter(
     (p) =>
       (searchTerm === "" ||
         p.name.toLowerCase().includes(searchTerm.toLowerCase())) &&

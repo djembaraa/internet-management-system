@@ -1,4 +1,5 @@
-﻿import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "../../../services/supabase";
 import {
   Plus,
   Edit,
@@ -25,10 +26,7 @@ import ColumnToggle, {
   type ColDef,
   initVisible,
 } from "../../../components/ColumnToggle";
-import {
-  MOCK_PPPOE_CLIENTS as MOCK_CLIENTS,
-  type PppoeClientItem,
-} from "../constants";
+import type { PppoeClientItem } from "../constants";
 
 const PPPOE_CLIENT_COLS: ColDef[] = [
   { key: "name", label: "Username (Name)" },
@@ -40,6 +38,35 @@ const PPPOE_CLIENT_COLS: ColDef[] = [
 ];
 
 export default function PppoeClientList() {
+  const [clients, setClients] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchClients();
+  }, []);
+
+  const fetchClients = async () => {
+    setIsLoading(true);
+    // Joining with pppoe_profiles to get the profile name
+    const { data, error } = await supabase
+      .from("pppoe_clients")
+      .select("*, pppoe_profiles(name)")
+      .order("created_at", { ascending: false });
+      
+    if (!error && data) {
+      const mapped = data.map((d: any) => ({
+        id: d.id,
+        name: d.fullname,
+        service: "pppoe",
+        profile: d.pppoe_profiles?.name || "Unknown",
+        remoteAddress: d.ip || "-",
+        status: d.status || "Disconnected"
+      }));
+      setClients(mapped);
+    }
+    setIsLoading(false);
+  };
+
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [visibleCols, setVisibleCols] = useState(() =>
@@ -70,7 +97,7 @@ export default function PppoeClientList() {
 
   // Edit modal
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [editClient, setEditClient] = useState<PppoeClientItem | null>(null);
+  const [editClient, setEditClient] = useState<any | null>(null);
 
   // Add form state
   const [addUsername, setAddUsername] = useState("");
@@ -120,7 +147,7 @@ export default function PppoeClientList() {
     );
   };
 
-  const filtered = MOCK_CLIENTS.filter(
+  const filtered = clients.filter(
     (c) =>
       (searchTerm === "" ||
         c.name.toLowerCase().includes(searchTerm.toLowerCase())) &&

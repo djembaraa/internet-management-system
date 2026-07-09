@@ -1,4 +1,5 @@
-﻿import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { supabase } from "../../../services/supabase";
 import {
   Plus,
   Edit,
@@ -17,6 +18,12 @@ import ColumnToggle, {
   type ColDef,
   initVisible,
 } from "../../../components/ColumnToggle";
+import EmptyState from "../../../components/EmptyState";
+import Modal from "../../../components/Modal";
+import FormLabel from "../../../components/FormLabel";
+import ActionButton from "../../../components/ActionButton";
+import SummaryStats from "../../../components/SummaryStats";
+import PaginationControls from "../../../components/PaginationControls";
 
 const TICKET_COLS: ColDef[] = [
   { key: "subject_person", label: "Subject Person" },
@@ -26,15 +33,37 @@ const TICKET_COLS: ColDef[] = [
   { key: "last_update", label: "Last Update" },
   { key: "action", label: "Action", fixed: true },
 ];
-import { MOCK_TICKETS } from "../../router/constants";
-import EmptyState from "../../../components/EmptyState";
-import Modal from "../../../components/Modal";
-import FormLabel from "../../../components/FormLabel";
-import ActionButton from "../../../components/ActionButton";
-import SummaryStats from "../../../components/SummaryStats";
-import PaginationControls from "../../../components/PaginationControls";
 
 export default function TicketList() {
+  const [tickets, setTickets] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchTickets = async () => {
+    setIsLoading(true);
+    const { data, error } = await supabase.from("tickets").select("*").order("last_update", { ascending: false });
+    if (!error && data) {
+      setTickets(data);
+    }
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
+    fetchTickets();
+
+    // Set up real-time subscription
+    const subscription = supabase
+      .channel('public:tickets')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, (payload) => {
+        console.log('Real-time update:', payload);
+        fetchTickets(); // Re-fetch on any change for simplicity, or we could mutate state locally
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
+  }, []);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [pageSize, setPageSize] = useState(10);
@@ -81,7 +110,7 @@ export default function TicketList() {
   const inputClasses =
     "w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3.5 py-2 outline-none focus:border-[#155b96] focus:ring-2 focus:ring-[#155b96]/10 text-sm bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500";
 
-  const filteredTickets = [...MOCK_TICKETS]
+  const filteredTickets = [...tickets]
     .filter(
       (t) =>
         (searchTerm === "" ||
@@ -134,19 +163,19 @@ export default function TicketList() {
         items={[
           {
             label: "Total Tiket",
-            value: MOCK_TICKETS.length,
+            value: tickets.length,
             icon: <FileText size={18} />,
             color: "blue",
           },
           {
             label: "Open",
-            value: MOCK_TICKETS.filter((t) => t.status === "Opened").length,
+            value: tickets.filter((t) => t.status === "Opened").length,
             icon: <CheckCircle size={18} />,
             color: "emerald",
           },
           {
             label: "Closed",
-            value: MOCK_TICKETS.filter((t) => t.status === "Closed").length,
+            value: tickets.filter((t) => t.status === "Closed").length,
             icon: <AlertCircle size={18} />,
             color: "red",
           },
