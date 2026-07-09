@@ -1,13 +1,32 @@
-﻿import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Plus, Search, Save } from "lucide-react";
-import { MOCK_CLIENT_TICKETS } from "../../router/constants";
+import { supabase } from "../../../services/supabase";
+import { useAuthStore } from "../../auth/store/authStore";
 import EmptyState from "../../../components/EmptyState";
 import Modal from "../../../components/Modal";
 import FormLabel from "../../../components/FormLabel";
 import PaginationControls from "../../../components/PaginationControls";
 
 export default function ClientTicket() {
-  const tickets = MOCK_CLIENT_TICKETS;
+  const { user, profile } = useAuthStore();
+  const [tickets, setTickets] = useState<any[]>([]);
+
+  const fetchTickets = async () => {
+    if (!user?.id) return;
+    const { data, error } = await supabase
+      .from("tickets")
+      .select("*")
+      .eq("client_id", user.id)
+      .order("last_update", { ascending: false });
+      
+    if (!error && data) {
+      setTickets(data);
+    }
+  };
+
+  useEffect(() => {
+    fetchTickets();
+  }, [user]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [pageSize, setPageSize] = useState(10);
@@ -35,7 +54,7 @@ export default function ClientTicket() {
   const filtered = tickets.filter(
     (t) =>
       searchTerm === "" ||
-      t.noTicket.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      t.no_ticket.toLowerCase().includes(searchTerm.toLowerCase()) ||
       t.subject.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
@@ -138,7 +157,7 @@ export default function ClientTicket() {
                     {startIndex + i + 1}
                   </td>
                   <td className="px-5 py-3.5 text-[#155b96] dark:text-blue-400 font-semibold">
-                    {t.noTicket}
+                    {t.no_ticket}
                   </td>
                   <td className="px-5 py-3.5 text-slate-700 dark:text-slate-100">
                     {t.subject}
@@ -168,7 +187,7 @@ export default function ClientTicket() {
                     </div>
                   </td>
                   <td className="px-5 py-3.5 text-slate-500 dark:text-slate-100 text-[12px] tabular-nums">
-                    {t.lastUpdate}
+                    {t.last_update}
                   </td>
                 </tr>
               ))}
@@ -199,11 +218,28 @@ export default function ClientTicket() {
       >
         <form
           className="space-y-5"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            console.log("Client ticket:", { subject, message, attachments });
+            
+            const noTicket = `TKT-${new Date().getFullYear()}${(new Date().getMonth()+1).toString().padStart(2, '0')}${new Date().getDate().toString().padStart(2, '0')}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
+            const clientName = profile?.full_name || profile?.username || user?.email;
+
+            const { error } = await supabase.from('tickets').insert({
+              no_ticket: noTicket,
+              client_id: user?.id,
+              subject_person: clientName,
+              subject: subject,
+              status: 'Opened'
+            });
+
+            if (error) {
+              alert("Gagal membuat tiket: " + error.message);
+              return;
+            }
+
             setIsModalOpen(false);
             resetForm();
+            fetchTickets();
           }}
         >
           {/* Subject */}

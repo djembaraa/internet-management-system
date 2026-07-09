@@ -409,18 +409,24 @@ export default function PppoeProfileList() {
       >
         <form
           className="space-y-4"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            console.log("Add profile:", {
-              addName,
-              addPrice,
-              addPool,
-              addLocalProfile,
-              addRateLimit,
-              addAdvanced,
+            
+            const { error } = await supabase.from('pppoe_profiles').insert({
+              name: addName,
+              price: Number(addPrice) || 0,
+              local_profile: addLocalProfile,
+              rate_limit: addRateLimit,
+              uniq_id: 'PPPoE Group'
             });
-            setIsModalOpen(false);
-            resetAddForm();
+
+            if (!error) {
+              setIsModalOpen(false);
+              resetAddForm();
+              fetchProfiles();
+            } else {
+              alert("Failed to add profile: " + error.message);
+            }
           }}
         >
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.15fr] gap-4 items-start">
@@ -615,17 +621,23 @@ export default function PppoeProfileList() {
       >
         <form
           className="space-y-4"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            console.log("Edit profile:", editProfile?.id, {
-              editName,
-              editPrice,
-              editPool,
-              editLocalProfile,
-              editRateLimit,
-            });
-            setEditModalOpen(false);
-            setEditProfile(null);
+            if (!editProfile?.id) return;
+            const { error } = await supabase.from('pppoe_profiles').update({
+              name: editName,
+              price: Number(editPrice) || 0,
+              local_profile: editLocalProfile,
+              rate_limit: editRateLimit
+            }).eq('id', editProfile.id);
+
+            if (!error) {
+              setEditModalOpen(false);
+              setEditProfile(null);
+              fetchProfiles();
+            } else {
+              alert("Failed to update profile: " + error.message);
+            }
           }}
         >
           <div>
@@ -696,9 +708,17 @@ export default function PppoeProfileList() {
           setDeleteModalOpen(false);
           setDeleteProfile(null);
         }}
-        onConfirm={() => {
-          console.log("Delete profile:", deleteProfile?.id);
-          setDeleteProfile(null);
+        onConfirm={async () => {
+          if (deleteProfile?.id) {
+            const { error } = await supabase.from('pppoe_profiles').delete().eq('id', deleteProfile.id);
+            if (!error) {
+              setDeleteProfile(null);
+              setDeleteModalOpen(false);
+              fetchProfiles();
+            } else {
+              alert("Failed to delete profile: " + error.message);
+            }
+          }
         }}
         itemCount={1}
       />

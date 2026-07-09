@@ -1,8 +1,8 @@
-﻿import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Calendar } from "lucide-react";
+import { supabase } from "../../../services/supabase";
 import {
   MOCK_HOTSPOT_REPORTS,
-  MOCK_INVOICE_REPORTS,
   MOCK_EXPENSES,
 } from "../../router/constants";
 import EmptyState from "../../../components/EmptyState";
@@ -31,22 +31,32 @@ export default function AccountingPage() {
     0,
   );
 
-  const invoiceTunai = MOCK_INVOICE_REPORTS.filter(
-    (r) => r.tipePembayaran === "Tunai",
-  ).reduce((sum, r) => sum + r.nominal, 0);
-  const invoiceTransfer = MOCK_INVOICE_REPORTS.filter(
-    (r) => r.tipePembayaran === "Transfer",
-  ).reduce((sum, r) => sum + r.nominal, 0);
-  const invoiceTunaiCount = MOCK_INVOICE_REPORTS.filter(
-    (r) => r.tipePembayaran === "Tunai",
+  const [invoices, setInvoices] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function fetchInvoices() {
+      const { data, error } = await supabase.from('invoices').select('*').order('created_at', { ascending: false });
+      if (!error && data) {
+        setInvoices(data);
+      }
+    }
+    fetchInvoices();
+  }, []);
+
+  const invoicePppoe = invoices.filter(
+    (r) => r.type === "PPPoE" && r.status === 'Paid',
+  ).reduce((sum, r) => sum + Number(r.amount), 0);
+  const invoiceManual = invoices.filter(
+    (r) => r.type === "Manual" && r.status === 'Paid',
+  ).reduce((sum, r) => sum + Number(r.amount), 0);
+  const invoicePppoeCount = invoices.filter(
+    (r) => r.type === "PPPoE" && r.status === 'Paid',
   ).length;
-  const invoiceTransferCount = MOCK_INVOICE_REPORTS.filter(
-    (r) => r.tipePembayaran === "Transfer",
+  const invoiceManualCount = invoices.filter(
+    (r) => r.type === "Manual" && r.status === 'Paid',
   ).length;
 
-  const totalPemasukan = MOCK_EXPENSES.filter(
-    (e) => e.type === "Pemasukan",
-  ).reduce((sum, e) => sum + e.nominal, 0);
+  const totalPemasukan = invoicePppoe + invoiceManual;
   const totalPengeluaran = MOCK_EXPENSES.filter(
     (e) => e.type === "Pengeluaran",
   ).reduce((sum, e) => sum + e.nominal, 0);
@@ -137,24 +147,24 @@ export default function AccountingPage() {
         </div>
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-sm p-4 flex flex-col justify-center">
           <p className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-bold mb-1">
-            Invoice Tunai
+            Invoice PPPoE Paid
           </p>
           <p className="text-lg font-bold text-slate-800 dark:text-slate-100 tabular-nums tracking-tight">
-            {formatRp(invoiceTunai)}
+            {formatRp(invoicePppoe)}
           </p>
           <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mt-1">
-            {invoiceTunaiCount} Transaksi
+            {invoicePppoeCount} Transaksi
           </p>
         </div>
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-sm p-4 flex flex-col justify-center">
           <p className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-bold mb-1">
-            Invoice Transfer
+            Invoice Manual Paid
           </p>
           <p className="text-lg font-bold text-slate-800 dark:text-slate-100 tabular-nums tracking-tight">
-            {formatRp(invoiceTransfer)}
+            {formatRp(invoiceManual)}
           </p>
           <p className="text-[11px] text-amber-600 dark:text-amber-400 font-medium mt-1">
-            {invoiceTransferCount} Transaksi
+            {invoiceManualCount} Transaksi
           </p>
         </div>
       </div>
@@ -367,7 +377,7 @@ export default function AccountingPage() {
             </div>
           </div>
           <div className="overflow-x-auto flex-1">
-            {MOCK_INVOICE_REPORTS.length === 0 ? (
+            {invoices.length === 0 ? (
               <EmptyState />
             ) : (
               <table className="w-full text-left text-[13px] whitespace-nowrap table-tight">
@@ -388,13 +398,13 @@ export default function AccountingPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {MOCK_INVOICE_REPORTS.map((r, i) => {
+                  {invoices.map((r, i) => {
                     const typeClass =
                       r.type === "PPPoE"
                         ? "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800/50"
                         : "bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800/50";
                     const viaClass =
-                      r.tipePembayaran === "Tunai"
+                      r.status === "Paid"
                         ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/50"
                         : "bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800/50";
 
@@ -413,10 +423,10 @@ export default function AccountingPage() {
                           {i + 1}
                         </td>
                         <td className="px-4 py-3 text-slate-500 dark:text-slate-400 tabular-nums text-[11px] font-medium">
-                          {r.tanggal}
+                          {new Date(r.created_at).toLocaleDateString()}
                         </td>
                         <td className="px-4 py-3 text-[#155b96] dark:text-blue-400 font-bold">
-                          {r.noInvoice}
+                          {r.serial}
                         </td>
                         <td className="px-4 py-3">
                           <span
@@ -426,13 +436,13 @@ export default function AccountingPage() {
                           </span>
                         </td>
                         <td className="px-4 py-3 font-bold text-slate-800 dark:text-slate-200 tabular-nums">
-                          {formatRp(r.nominal)}
+                          {formatRp(Number(r.amount))}
                         </td>
                         <td className="px-4 py-3">
                           <span
                             className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${viaClass}`}
                           >
-                            {r.tipePembayaran}
+                            {r.status}
                           </span>
                         </td>
                       </tr>
@@ -443,8 +453,8 @@ export default function AccountingPage() {
             )}
           </div>
           <div className="p-3 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 font-medium">
-            Showing 1 to {MOCK_INVOICE_REPORTS.length} of{" "}
-            {MOCK_INVOICE_REPORTS.length} entries
+            Showing 1 to {invoices.length} of{" "}
+            {invoices.length} entries
           </div>
         </div>
       </div>

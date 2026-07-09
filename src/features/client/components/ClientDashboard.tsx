@@ -28,11 +28,11 @@ const trafficData = [
 
 export default function ClientDashboard() {
     const { user, profile } = useAuthStore();
-    const conn = MOCK_CLIENT_CONNECTION;
     const [range, setRange] = useState("1 Hour");
     const isDark = useThemeStore((s) => s.theme === "dark");
 
     const [unpaidCount, setUnpaidCount] = useState(0);
+    const [pppoeStatus, setPppoeStatus] = useState<any>(null);
 
     useEffect(() => {
         async function fetchUnpaid() {
@@ -45,30 +45,44 @@ export default function ClientDashboard() {
             
             if (count) setUnpaidCount(count);
         }
+
+        async function fetchPppoe() {
+            if (!profile?.username) return;
+            const { data } = await supabase
+                .from('pppoe_clients')
+                .select('*, pppoe_profiles(name)')
+                .eq('fullname', profile.username)
+                .single();
+            if (data) {
+                setPppoeStatus(data);
+            }
+        }
+        
         fetchUnpaid();
-    }, [user]);
+        fetchPppoe();
+    }, [user, profile]);
 
     const infoRows: [string, React.ReactNode][] = [
         [
             "Status Perangkat",
             <span
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium ${conn.statusPerangkat === "Connected"
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium ${pppoeStatus?.status === "Connected"
                         ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400"
                         : "bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400"
                     }`}
             >
                 <span
-                    className={`w-1.5 h-1.5 rounded-full ${conn.statusPerangkat === "Connected"
+                    className={`w-1.5 h-1.5 rounded-full ${pppoeStatus?.status === "Connected"
                             ? "bg-emerald-500"
                             : "bg-red-500"
                         }`}
                 ></span>
-                {conn.statusPerangkat}
+                {pppoeStatus?.status || "Disconnected"}
             </span>,
         ],
         [
             "Uptime Perangkat",
-            <span className="text-slate-700 dark:text-slate-100">{conn.uptimePerangkat}</span>,
+            <span className="text-slate-700 dark:text-slate-100">{pppoeStatus?.uptime || "00:00:00"}</span>,
         ],
         [
             "Fullname",
@@ -76,12 +90,12 @@ export default function ClientDashboard() {
         ],
         [
             "Paket / Layanan",
-            <span className="text-slate-700 dark:text-slate-100">{conn.paketLayanan}</span>,
+            <span className="text-slate-700 dark:text-slate-100">{pppoeStatus?.pppoe_profiles?.name || "-"}</span>,
         ],
         [
             "Total Penggunaan Bulan Ini",
             <span className="text-slate-700 dark:text-slate-100 font-semibold tabular-nums">
-                {conn.totalPenggunaan}
+                0 GB
             </span>,
         ],
     ];
@@ -202,12 +216,12 @@ export default function ClientDashboard() {
 
                 {/* Status badge */}
                 <div className="relative flex items-center justify-center mb-4">
-                    <div className={`flex items-center gap-2 ${c.badgeBg} backdrop-blur-sm border rounded-full px-4 py-1.5`}>
+                    <div className={`flex items-center gap-2 ${pppoeStatus?.status === 'Connected' ? c.badgeBg : 'bg-red-500/10 border-red-500/20'} backdrop-blur-sm border rounded-full px-4 py-1.5`}>
                         <span className="relative flex h-2 w-2">
-                            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${c.pingDot} opacity-75`}></span>
-                            <span className={`relative inline-flex rounded-full h-2 w-2 ${c.pingDot}`}></span>
+                            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${pppoeStatus?.status === 'Connected' ? c.pingDot : 'bg-red-500'} opacity-75`}></span>
+                            <span className={`relative inline-flex rounded-full h-2 w-2 ${pppoeStatus?.status === 'Connected' ? c.pingDot : 'bg-red-500'}`}></span>
                         </span>
-                        <span className={`${c.badgeText} text-[11px] font-bold tracking-[0.2em]`}>CONNECTED</span>
+                        <span className={`${pppoeStatus?.status === 'Connected' ? c.badgeText : 'text-red-500'} text-[11px] font-bold tracking-[0.2em]`}>{pppoeStatus?.status === 'Connected' ? 'CONNECTED' : 'DISCONNECTED'}</span>
                     </div>
                 </div>
 
@@ -335,7 +349,7 @@ export default function ClientDashboard() {
                             <rect x="273" y="72" width="3" height="5" rx="0.5" fill={c.pingBadgeStroke} opacity="0.4" transform="translate(0,-6)" />
                             <rect x="278" y="72" width="3" height="8" rx="0.5" fill={c.pingBadgeStroke} opacity="0.65" transform="translate(0,-9)" />
                             <rect x="283" y="72" width="3" height="11" rx="0.5" fill={c.pingBadgeStroke} transform="translate(0,-12)" />
-                            <text x="314" y="76" textAnchor="middle" fill={c.pingText} style={{ fontSize: '12px', fontWeight: 700 }}>{conn.ping}</text>
+                            <text x="314" y="76" textAnchor="middle" fill={c.pingText} style={{ fontSize: '12px', fontWeight: 700 }}>{pppoeStatus?.status === 'Connected' ? '12ms' : '0ms'}</text>
                         </g>
 
                         {/* ── Right Node: Bras Server ── */}

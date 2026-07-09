@@ -58,11 +58,25 @@ export default function PppoeClientList() {
         service: "pppoe",
         profile: d.pppoe_profiles?.name || "Unknown",
         remoteAddress: d.ip || "-",
-        status: d.status || "Disconnected"
+        status: (d.status || "Disconnected").toLowerCase()
       }));
       setClients(mapped);
     }
   };
+
+  const [pppoeProfiles, setPppoeProfiles] = useState<any[]>([]);
+  const [clientProfiles, setClientProfiles] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchSelectData = async () => {
+      const { data: profs } = await supabase.from('pppoe_profiles').select('*');
+      if (profs) setPppoeProfiles(profs);
+
+      const { data: cData } = await supabase.from('profiles').select('*').eq('role', 'client');
+      if (cData) setClientProfiles(cData);
+    };
+    fetchSelectData();
+  }, []);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -189,7 +203,7 @@ export default function PppoeClientList() {
     setAddInvoiceEmail(false);
   };
 
-  const handleEditClick = (client: PppoeClientItem) => {
+  const handleEditClick = (client: any) => {
     setEditClient(client);
     setEditModalOpen(true);
   };
@@ -197,6 +211,39 @@ export default function PppoeClientList() {
   const handleDeleteClick = (clientId: number) => {
     setDeleteClientId(clientId);
     setDeleteModalOpen(true);
+  };
+
+  const handleAddSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // addFullname acts as the reference to profile's username
+    const { error } = await supabase.from("pppoe_clients").insert({
+      fullname: addFullname,
+      ip: addStaticIp,
+      profile_id: addProfile || null,
+      status: 'Disconnected',
+    });
+
+    if (!error) {
+      setIsModalOpen(false);
+      resetAddForm();
+      fetchClients();
+    } else {
+      alert("Failed to add client: " + error.message);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (deleteClientId) {
+      const { error } = await supabase.from("pppoe_clients").delete().eq('id', deleteClientId);
+      if (!error) {
+        setDeleteModalOpen(false);
+        setDeleteClientId(null);
+        fetchClients();
+      } else {
+        alert("Failed to delete client: " + error.message);
+      }
+    }
   };
 
   const inputClasses =
@@ -574,24 +621,7 @@ export default function PppoeClientList() {
       >
         <form
           className="space-y-6"
-          onSubmit={(e) => {
-            e.preventDefault();
-            console.log("Add client:", {
-              addUsername,
-              addPassword,
-              addProfile,
-              addStaticIp,
-              addSn,
-              addFullname,
-              addPhone,
-              addEmail,
-              addAddress,
-              addTags,
-              addBilling,
-            });
-            setIsModalOpen(false);
-            resetAddForm();
-          }}
+          onSubmit={handleAddSubmit}
         >
           {/* Two-column grid */}
           <div
@@ -638,16 +668,17 @@ export default function PppoeClientList() {
               </div>
 
               <div>
-                <FormLabel label="Profile" required />
+                <FormLabel label="Internet Profile" required />
                 <select
                   value={addProfile}
                   onChange={(e) => setAddProfile(e.target.value)}
                   className={inputClasses}
+                  required
                 >
-                  <option value="asd">asd</option>
-                  <option value="Paket 10Mbps">Paket 10Mbps</option>
-                  <option value="Paket 20Mbps">Paket 20Mbps</option>
-                  <option value="Paket 50Mbps">Paket 50Mbps</option>
+                  <option value="">Pilih Profil...</option>
+                  {pppoeProfiles.map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
                 </select>
               </div>
 
@@ -695,15 +726,18 @@ export default function PppoeClientList() {
               </div>
 
               <div>
-                <FormLabel label="Full Name" required />
-                <input
-                  type="text"
+                <FormLabel label="Client Account (User)" required />
+                <select
                   required
                   value={addFullname}
                   onChange={(e) => setAddFullname(e.target.value)}
-                  placeholder="John Doe"
                   className={inputClasses}
-                />
+                >
+                  <option value="">Pilih Client...</option>
+                  {clientProfiles.map(c => (
+                    <option key={c.id} value={c.username}>{c.full_name || c.username}</option>
+                  ))}
+                </select>
               </div>
 
               <div>

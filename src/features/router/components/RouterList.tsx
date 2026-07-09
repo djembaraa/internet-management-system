@@ -65,6 +65,8 @@ export default function RouterList() {
     }
   };
 
+  const [addName, setAddName] = useState("");
+  const [addSecret, setAddSecret] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [pageSize, setPageSize] = useState(10);
@@ -152,15 +154,53 @@ export default function RouterList() {
     setDeleteModalOpen(true);
   };
 
-  const handleEditSubmit = (e: React.FormEvent) => {
+  const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: call API to update router — editRouter?.id, { name: editName, secret: editSecret }
-    setEditModalOpen(false);
+    const { error } = await supabase.from("routers").insert({
+      name: addName,
+      password: addSecret, // password is the field used for secret in this schema
+      username: 'admin',
+      api_port: 8728,
+      ip_address: '127.0.0.1',
+      vpn_status: false
+    });
+    if (!error) {
+      setIsAddModalOpen(false);
+      setAddName("");
+      setAddSecret("");
+      fetchRouters();
+    } else {
+      alert("Failed to add router: " + error.message);
+    }
   };
 
-  const handleDeleteConfirm = () => {
-    // TODO: call API to delete router — deleteRouter?.id
-    setDeleteRouter(null);
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editRouter) {
+      const { error } = await supabase.from("routers").update({
+        name: editName,
+        password: editSecret,
+      }).eq('id', editRouter.id);
+      if (!error) {
+        setEditModalOpen(false);
+        fetchRouters();
+      } else {
+        alert("Failed to update router: " + error.message);
+      }
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (deleteRouter) {
+      const { error } = await supabase.from("routers").delete().eq('id', deleteRouter.id);
+      if (!error) {
+        setDeleteModalOpen(false);
+        setDeleteRouter(null);
+        fetchRouters();
+      } else {
+        alert("Failed to delete router: " + error.message);
+      }
+    }
   };
 
   return (
@@ -430,10 +470,7 @@ export default function RouterList() {
       >
         <form
           className="space-y-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            setIsAddModalOpen(false);
-          }}
+          onSubmit={handleAddSubmit}
         >
           <div>
             <FormLabel
@@ -444,6 +481,8 @@ export default function RouterList() {
             <input
               type="text"
               required
+              value={addName}
+              onChange={(e) => setAddName(e.target.value)}
               placeholder="Name"
               className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3.5 py-2 outline-none focus:border-[#155b96] focus:ring-2 focus:ring-[#155b96]/10 text-sm bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-100"
             />
@@ -457,6 +496,8 @@ export default function RouterList() {
             <input
               type="text"
               required
+              value={addSecret}
+              onChange={(e) => setAddSecret(e.target.value)}
               placeholder="Secret"
               className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3.5 py-2 outline-none focus:border-[#155b96] focus:ring-2 focus:ring-[#155b96]/10 text-sm bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-100"
             />

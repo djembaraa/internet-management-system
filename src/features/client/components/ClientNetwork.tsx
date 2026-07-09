@@ -1,10 +1,31 @@
-import { useState } from "react";
-import { Wifi, Lock, RotateCcw, Power, AlertTriangle, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Wifi, Lock, RotateCcw, Power, AlertTriangle, X, Info } from "lucide-react";
+import { useAuthStore } from "../../auth/store/authStore";
+import { supabase } from "../../../services/supabase";
 
 export default function ClientNetwork() {
+    const { profile } = useAuthStore();
+    const [pppoeStatus, setPppoeStatus] = useState<any>(null);
     const [ssid, setSsid] = useState("DJ-Network-5G");
     const [password, setPassword] = useState("mypassword123");
     const [warningAction, setWarningAction] = useState<"reboot" | "restart" | null>(null);
+
+    useEffect(() => {
+        async function fetchPppoe() {
+            if (!profile?.username) return;
+            const { data } = await supabase
+                .from('pppoe_clients')
+                .select('*')
+                .eq('fullname', profile.username)
+                .single();
+            if (data) {
+                setPppoeStatus(data);
+            }
+        }
+        fetchPppoe();
+    }, [profile]);
+
+    const isConnected = pppoeStatus?.status === 'Connected';
 
     const handleConfirm = () => {
         // In production this would call an API
@@ -31,8 +52,9 @@ export default function ClientNetwork() {
                             <input
                                 type="text"
                                 value={ssid}
+                                disabled={!isConnected}
                                 onChange={(e) => setSsid(e.target.value)}
-                                className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3.5 py-2.5 outline-none focus:border-[#155b96] focus:ring-1 focus:ring-[#155b96]/20 text-[13px] bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-100 transition-colors"
+                                className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3.5 py-2.5 outline-none focus:border-[#155b96] focus:ring-1 focus:ring-[#155b96]/20 text-[13px] bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-100 transition-colors disabled:opacity-50"
                                 placeholder="Masukkan nama WiFi baru"
                             />
                         </div>
@@ -46,17 +68,24 @@ export default function ClientNetwork() {
                             <input
                                 type="text"
                                 value={password}
+                                disabled={!isConnected}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3.5 py-2.5 outline-none focus:border-[#155b96] focus:ring-1 focus:ring-[#155b96]/20 text-[13px] bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-100 transition-colors"
+                                className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3.5 py-2.5 outline-none focus:border-[#155b96] focus:ring-1 focus:ring-[#155b96]/20 text-[13px] bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-100 transition-colors disabled:opacity-50"
                                 placeholder="Masukkan password baru"
                             />
                         </div>
                     </div>
 
-                    <div className="flex justify-end mt-4">
+                    <div className="flex justify-between items-center mt-4">
+                        {!isConnected ? (
+                            <div className="text-[12px] text-red-500 flex items-center gap-1">
+                                <Info size={14} /> Router sedang offline, pengaturan tidak bisa diubah.
+                            </div>
+                        ) : <div />}
                         <button
                             type="button"
-                            className="px-4 py-2 bg-[#155b96] hover:bg-[#12507e] text-white text-[13px] font-medium rounded-lg transition-colors"
+                            disabled={!isConnected}
+                            className="px-4 py-2 bg-[#155b96] hover:bg-[#12507e] text-white text-[13px] font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             Simpan Perubahan
                         </button>
@@ -73,16 +102,18 @@ export default function ClientNetwork() {
                     <div className="flex flex-col sm:flex-row gap-3">
                         <button
                             type="button"
+                            disabled={!isConnected}
                             onClick={() => setWarningAction("reboot")}
-                            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 text-amber-700 dark:text-amber-400 rounded-lg text-[13px] font-semibold hover:bg-amber-100 dark:hover:bg-amber-950/50 transition-colors"
+                            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 text-amber-700 dark:text-amber-400 rounded-lg text-[13px] font-semibold hover:bg-amber-100 dark:hover:bg-amber-950/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <RotateCcw size={15} />
                             Reboot
                         </button>
                         <button
                             type="button"
+                            disabled={!isConnected}
                             onClick={() => setWarningAction("restart")}
-                            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/50 text-red-700 dark:text-red-400 rounded-lg text-[13px] font-semibold hover:bg-red-100 dark:hover:bg-red-950/50 transition-colors"
+                            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/50 text-red-700 dark:text-red-400 rounded-lg text-[13px] font-semibold hover:bg-red-100 dark:hover:bg-red-950/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <Power size={15} />
                             Restart
