@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Search,
   ArrowUp,
@@ -6,7 +6,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
-import { MOCK_TRAFFIC_PPPOE } from "../../router/constants";
+import { supabase } from "../../../services/supabase";
 import ColumnToggle, {
   type ColDef,
   initVisible,
@@ -33,7 +33,31 @@ export default function TrafficPppoeClientPage() {
     initVisible(TRAFFIC_COLS),
   );
 
-  const filtered = MOCK_TRAFFIC_PPPOE.filter(
+  const [trafficData, setTrafficData] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function fetchData() {
+      const { data, error } = await supabase.from('pppoe_clients').select(`
+        *,
+        pppoe_profiles ( name )
+      `);
+      if (!error && data) {
+        setTrafficData(data.map(d => ({
+          id: d.id,
+          username: d.fullname,
+          ip: d.ip || "-",
+          upload: "0.0 Mbps",
+          download: "0.0 Mbps",
+          uptime: "0m",
+          profile: d.pppoe_profiles?.name || "-",
+          status: d.status
+        })));
+      }
+    }
+    fetchData();
+  }, []);
+
+  const filtered = trafficData.filter(
     (t) =>
       searchTerm === "" ||
       t.username.toLowerCase().includes(searchTerm.toLowerCase()) ||

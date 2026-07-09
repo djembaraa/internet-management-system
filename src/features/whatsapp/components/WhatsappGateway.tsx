@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Power,
   BookOpen,
@@ -9,7 +9,7 @@ import {
   Send,
   CheckCircle2,
 } from "lucide-react";
-import { MOCK_WHATSAPP_MESSAGES } from "../../router/constants";
+import { supabase } from "../../../services/supabase";
 import Modal from "../../../components/Modal";
 import FormLabel from "../../../components/FormLabel";
 import EmptyState from "../../../components/EmptyState";
@@ -19,15 +19,28 @@ export default function WhatsappGateway() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isPhoneBookOpen, setIsPhoneBookOpen] = useState(false);
 
-  // State untuk Modal Detail
-  const [selectedMessage, setSelectedMessage] = useState<
-    (typeof MOCK_WHATSAPP_MESSAGES)[0] | null
-  >(null);
+  const [selectedMessage, setSelectedMessage] = useState<any | null>(null);
+
+  const [messages, setMessages] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function fetchMessages() {
+      const { data, error } = await supabase.from('whatsapp_messages').select('*').order('created_at', { ascending: false });
+      if (!error && data) {
+        setMessages(data.map(m => ({
+          ...m,
+          to: m.target,
+          timestamp: new Date(m.created_at).toLocaleString()
+        })));
+      }
+    }
+    fetchMessages();
+  }, []);
 
   // Mobile expand
   const [expandedMobileId, setExpandedMobileId] = useState<string | null>(null);
 
-  const filteredMessages = MOCK_WHATSAPP_MESSAGES.filter(
+  const filteredMessages = messages.filter(
     (msg) =>
       searchTerm === "" ||
       msg.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -262,7 +275,7 @@ export default function WhatsappGateway() {
           <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-[12px] text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900">
             <div>
               Showing 1 to {filteredMessages.length} of{" "}
-              {MOCK_WHATSAPP_MESSAGES.length} entries
+              {messages.length} entries
             </div>
             <div className="flex items-center gap-1">
               <button className="px-2.5 py-1 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 transition-colors">

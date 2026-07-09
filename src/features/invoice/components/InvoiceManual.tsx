@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Plus,
   Save,
@@ -28,10 +28,8 @@ import InvoiceReceipt, { type InvoiceReceiptData } from "./InvoiceReceipt";
 import { useInvoiceTemplateStore } from "../../../store/invoiceTemplateStore";
 import ActionButton from "../../../components/ActionButton";
 import PaginationControls from "../../../components/PaginationControls";
-import {
-  MOCK_MANUAL_INVOICES as MOCK_INVOICES,
-  type ManualInvoiceItem as ManualInvoice,
-} from "../constants";
+import { type ManualInvoiceItem as ManualInvoice } from "../constants";
+import { supabase } from "../../../services/supabase";
 
 const INVOICE_COLS: ColDef[] = [
   { key: "invoiceId", label: "Invoice ID" },
@@ -85,6 +83,25 @@ export default function InvoiceManual() {
   const [visibleCols, setVisibleCols] = useState(() =>
     initVisible(INVOICE_COLS),
   );
+  const [invoices, setInvoices] = useState<ManualInvoice[]>([]);
+
+  useEffect(() => {
+    async function fetchData() {
+      const { data } = await supabase.from('invoices').select('*').order('created_at', { ascending: false });
+      if (data) {
+        setInvoices(data.map(i => ({
+          id: i.id,
+          fullname: i.client_id,
+          description: "Monthly Internet Bill",
+          date: new Date(i.created_at).toLocaleDateString(),
+          amount: "Rp " + i.amount.toLocaleString(),
+          status: i.status === "Unpaid" ? "Unpaid" : "Paid",
+          serial: i.invoice_number || `INV-${i.id.substring(0,6)}`
+        })));
+      }
+    }
+    fetchData();
+  }, []);
 
   // Mobile expand
   const [expandedMobileId, setExpandedMobileId] = useState<number | null>(null);
@@ -279,23 +296,23 @@ export default function InvoiceManual() {
     setIsEditModalOpen(true);
   };
 
-  const filtered = MOCK_INVOICES.filter(
+  const filtered = invoices.filter(
     (inv) =>
       searchTerm === "" ||
       inv.fullname.toLowerCase().includes(searchTerm.toLowerCase()) ||
       inv.serial.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
-  const totalInvoices = MOCK_INVOICES.length;
+  const totalInvoices = invoices.length;
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safeCurrentPage = Math.min(currentPage, totalPages);
   const startIndex = (safeCurrentPage - 1) * pageSize;
   const paginatedInvoices = filtered.slice(startIndex, startIndex + pageSize);
   const startItem = filtered.length === 0 ? 0 : startIndex + 1;
   const endItem = Math.min(startIndex + pageSize, filtered.length);
-  const paidCount = MOCK_INVOICES.filter((i) => i.status === "Paid").length;
-  const unpaidCount = MOCK_INVOICES.filter((i) => i.status === "Unpaid").length;
-  const partialCount = MOCK_INVOICES.filter(
+  const paidCount = invoices.filter((i) => i.status === "Paid").length;
+  const unpaidCount = invoices.filter((i) => i.status === "Unpaid").length;
+  const partialCount = invoices.filter(
     (i) => i.status === "Partially Paid",
   ).length;
 

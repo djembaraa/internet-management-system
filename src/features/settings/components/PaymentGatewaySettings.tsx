@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { Save, Wallet, CreditCard, Building2, Lock, Unlock } from "lucide-react";
+import { Save, Wallet, CreditCard, Building2, Lock, Unlock, Plus, Trash2, ShieldCheck, ArrowRightLeft, Search } from "lucide-react";
 import FormLabel from "../../../components/FormLabel";
-import { MOCK_BANKS, MOCK_MOOTA } from "../constants";
 
 // Helper for toggle switch
 function ToggleSwitch({ checked, onChange, label, icon: Icon }: { checked: boolean, onChange: () => void, label: string, icon?: React.ElementType }) {
@@ -114,11 +113,11 @@ export default function PaymentGatewaySettings() {
                <div className="bg-slate-50/50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-700/50 rounded-xl p-4 space-y-3">
                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 border-b border-slate-200/60 dark:border-slate-700/60 pb-2">
                    <span className="text-[12px] text-slate-500 dark:text-slate-400 font-medium">Owner Fullname</span>
-                   <span className="text-[13px] text-slate-800 dark:text-slate-100 font-bold">{MOCK_MOOTA.fullname}</span>
+                   <span className="text-[13px] text-slate-800 dark:text-slate-100 font-bold">John Doe</span>
                  </div>
                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                   <span className="text-[12px] text-slate-500 dark:text-slate-400 font-medium">Registered Email</span>
-                   <span className="text-[13px] text-slate-800 dark:text-slate-100 font-medium truncate">{MOCK_MOOTA.email}</span>
+                   <span className="text-[13px] text-slate-800 dark:text-slate-100 font-bold">Moota User</span>
+                   <span className="text-[13px] text-slate-800 dark:text-slate-100 font-medium truncate">admin@moota.co</span>
                  </div>
                </div>
             </div>
@@ -133,34 +132,7 @@ export default function PaymentGatewaySettings() {
                </h2>
             </div>
             <div className="p-5 space-y-4">
-              {MOCK_BANKS.map((bank, idx) => (
-                <div key={idx} className="bg-slate-50/50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-700/50 rounded-xl p-4 space-y-2">
-                  <div className="flex items-center justify-between border-b border-slate-200/60 dark:border-slate-700/60 pb-2 mb-2">
-                     <span className="text-[13px] font-bold text-slate-800 dark:text-slate-100 truncate pr-2">{bank.name}</span>
-                     <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold uppercase tracking-wider border border-emerald-200 dark:border-emerald-800/50 shrink-0">
-                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                       {bank.status}
-                     </span>
-                  </div>
-                  
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[12px]">
-                    <span className="text-slate-500 dark:text-slate-400 font-medium">Bank Label</span>
-                    <span className="text-slate-700 dark:text-slate-200 font-medium">{bank.label}</span>
-                  </div>
-                  
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[12px]">
-                    <span className="text-slate-500 dark:text-slate-400 font-medium">Account Number</span>
-                    <span className="text-slate-800 dark:text-slate-100 font-bold tabular-nums tracking-wide">{bank.accountNumber}</span>
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[11px] pt-1">
-                    <span className="text-slate-400 dark:text-slate-500">Last Sync</span>
-                    <span className="text-slate-500 dark:text-slate-400 tabular-nums">{bank.lastUpdate}</span>
-                  </div>
-                </div>
-              ))}
-              
-              {MOCK_BANKS.length === 0 && (
+              {true && (
                  <div className="text-center py-6 text-slate-400 text-[13px]">
                     No banks connected yet.
                  </div>

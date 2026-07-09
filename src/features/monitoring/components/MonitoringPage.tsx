@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Search,
   Edit,
@@ -15,7 +15,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
-import { MOCK_ONU_LIST, MOCK_OLT_LIST } from "../../router/constants";
+import { supabase } from "../../../services/supabase";
 import EmptyState from "../../../components/EmptyState";
 import ColumnToggle, {
   type ColDef,
@@ -80,6 +80,29 @@ export default function MonitoringPage() {
   const [visibleOltCols, setVisibleOltCols] = useState(() =>
     initVisible(OLT_COLS),
   );
+
+  const [onus, setOnus] = useState<any[]>([]);
+  const [olts, setOlts] = useState<any[]>([]);
+
+  const fetchData = async () => {
+    const { data: oltData } = await supabase.from('olts').select('*').order('created_at', { ascending: false });
+    if (oltData) setOlts(oltData);
+
+    const { data: onuData } = await supabase.from('onus').select('*, olts(name)').order('created_at', { ascending: false });
+    if (onuData) {
+      setOnus(onuData.map(o => ({
+        ...o,
+        olt: o.olts?.name || '-',
+        macSn: o.mac_sn,
+        rxPower: o.rx_power,
+        lastSeen: o.last_seen ? new Date(o.last_seen).toLocaleString() : '-'
+      })));
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   // Filter state
   const [showFilter, setShowFilter] = useState(false);
@@ -172,7 +195,7 @@ export default function MonitoringPage() {
 
   const handleEditOltSelect = (id: string) => {
     setEditSelectedOlt(id);
-    const found = MOCK_OLT_LIST.find((o) => o.id === id);
+    const found = olts.find((o) => o.id === id);
     if (found) {
       setEditForm({
         label: found.name,
@@ -186,9 +209,9 @@ export default function MonitoringPage() {
     }
   };
 
-  const uniqueOlts = ["All", ...new Set(MOCK_ONU_LIST.map((o) => o.olt))];
+  const uniqueOlts = ["All", ...new Set(onus.map((o) => o.olt))];
 
-  const filteredOnu = MOCK_ONU_LIST.filter((onu) => {
+  const filteredOnu = onus.filter((onu) => {
     const matchOlt = filterOlt === "All" || onu.olt === filterOlt;
     const matchSearch =
       searchTerm === "" ||
@@ -206,11 +229,11 @@ export default function MonitoringPage() {
     return onuSortOrder === "asc" ? av.localeCompare(bv) : bv.localeCompare(av);
   });
 
-  const filteredOlt = MOCK_OLT_LIST.filter(
+  const filteredOlt = olts.filter(
     (olt) =>
       (searchTerm === "" ||
         olt.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        olt.ip.includes(searchTerm)) &&
+        olt.ip?.includes(searchTerm)) &&
       (filterOltStatus === "" || olt.status === filterOltStatus),
   );
 
@@ -229,14 +252,14 @@ export default function MonitoringPage() {
   const paginatedOlt = sortedOlt.slice(startIndex, startIndex + pageSize);
   const startItem = activeItems.length === 0 ? 0 : startIndex + 1;
   const endItem = Math.min(startIndex + pageSize, activeItems.length);
-  const totalOnu = MOCK_ONU_LIST.length;
-  const onlineOnu = MOCK_ONU_LIST.filter(
+  const totalOnu = onus.length;
+  const onlineOnu = onus.filter(
     (onu) => onu.status === "Online",
   ).length;
-  const warningOnu = MOCK_ONU_LIST.filter(
+  const warningOnu = onus.filter(
     (onu) => onu.status === "Warning",
   ).length;
-  const offlineOnu = MOCK_ONU_LIST.filter(
+  const offlineOnu = onus.filter(
     (onu) => onu.status === "Offline",
   ).length;
 
@@ -1134,7 +1157,7 @@ export default function MonitoringPage() {
                   className="border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-[13px] outline-none focus:border-[#155b96] bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-100"
                 >
                   <option value="">Select OLT</option>
-                  {MOCK_OLT_LIST.map((o) => (
+                  {olts.map((o) => (
                     <option key={o.id} value={o.id}>
                       {o.name}
                     </option>
@@ -1271,7 +1294,7 @@ export default function MonitoringPage() {
                 className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-[13px] outline-none focus:border-red-400 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-100 mt-1"
               >
                 <option value="">— Pilih OLT —</option>
-                {MOCK_OLT_LIST.map((o) => (
+                {olts.map((o) => (
                   <option key={o.id} value={o.id}>
                     {o.name}
                   </option>

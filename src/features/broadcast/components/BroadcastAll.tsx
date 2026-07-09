@@ -1,24 +1,36 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Send, Users, Search, MessageSquare, Info, Check } from "lucide-react";
-import { MOCK_BROADCAST_USERS } from "../constants";
-import { MOCK_WHATSAPP_MESSAGES } from "../../router/constants";
+import { supabase } from "../../../services/supabase";
 
 export default function BroadcastAll() {
   const [message, setMessage] = useState("");
   const [via, setVia] = useState<"whatsapp" | "telegram">("whatsapp");
   const [sendToAll, setSendToAll] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
+  const [logs, setLogs] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function fetchData() {
+      const { data: profiles } = await supabase.from('profiles').select('*');
+      if (profiles) setUsers(profiles.map(p => ({ id: p.id, name: p.full_name || p.username, phone: '-' })));
+
+      const { data: messages } = await supabase.from('whatsapp_messages').select('*').order('created_at', { ascending: false }).limit(8);
+      if (messages) setLogs(messages.map(m => ({ id: m.id, to: m.receiver, message: m.message, timestamp: new Date(m.created_at).toLocaleString() })));
+    }
+    fetchData();
+  }, []);
 
   const filteredUsers = useMemo(() => {
-    return MOCK_BROADCAST_USERS.filter(
+    return users.filter(
       (u) =>
         u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         u.phone.includes(searchQuery),
     );
   }, [searchQuery]);
 
-  const toggleUser = (id: number) => {
+  const toggleUser = (id: string) => {
     setSelectedUsers((prev) =>
       prev.includes(id)
         ? prev.filter((userId) => userId !== id)
@@ -117,7 +129,7 @@ export default function BroadcastAll() {
                 </h4>
                 <p className="text-[12px] text-slate-500 dark:text-slate-400 px-2">
                   Pesan akan dibroadcast ke seluruh user yang terdaftar dalam
-                  sistem (Total {MOCK_BROADCAST_USERS.length} user).
+                  sistem (Total {users.length} user).
                 </p>
               </div>
             ) : (
@@ -221,7 +233,7 @@ export default function BroadcastAll() {
               <span>Isi Pesan</span>
               {sendToAll ? (
                 <span className="normal-case text-[11px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full flex items-center gap-1">
-                  <Info size={12} /> Ke {MOCK_BROADCAST_USERS.length} User
+                  <Info size={12} /> Ke {users.length} User
                 </span>
               ) : (
                 <span className="normal-case text-[11px] font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded-full flex items-center gap-1">
@@ -293,7 +305,7 @@ export default function BroadcastAll() {
             </p>
           </div>
           <span className="text-[11px] font-semibold text-[#155b96] dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded-full">
-            {MOCK_WHATSAPP_MESSAGES.length} log
+            {logs.length} log
           </span>
         </div>
         <div className="overflow-x-auto">
@@ -307,7 +319,7 @@ export default function BroadcastAll() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {MOCK_WHATSAPP_MESSAGES.slice(0, 8).map((msg, index) => (
+              {logs.map((msg, index) => (
                 <tr
                   key={msg.id}
                   className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors"

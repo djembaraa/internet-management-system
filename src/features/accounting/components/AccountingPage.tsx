@@ -1,10 +1,6 @@
 import { useState, useEffect } from "react";
 import { Plus, Calendar } from "lucide-react";
 import { supabase } from "../../../services/supabase";
-import {
-  MOCK_HOTSPOT_REPORTS,
-  MOCK_EXPENSES,
-} from "../../router/constants";
 import EmptyState from "../../../components/EmptyState";
 import Modal from "../../../components/Modal";
 import FormLabel from "../../../components/FormLabel";
@@ -21,26 +17,68 @@ const MONTHS = [
 export default function AccountingPage() {
   const [selectedMonth, setSelectedMonth] = useState("Februari 2026");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [expenses, setExpenses] = useState<any[]>([]);
 
-  const voucherTerjual = MOCK_HOTSPOT_REPORTS.reduce(
+  // Add Expense form state
+  const [addDate, setAddDate] = useState("");
+  const [addType, setAddType] = useState("Pengeluaran");
+  const [addAmount, setAddAmount] = useState("");
+  const [addDesc, setAddDesc] = useState("");
+
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [voucherReports, setVoucherReports] = useState<any[]>([]);
+
+  const voucherTerjual = voucherReports.reduce(
     (sum, r) => sum + r.jumlah,
     0,
   );
-  const voucherNominal = MOCK_HOTSPOT_REPORTS.reduce(
+  const voucherNominal = voucherReports.reduce(
     (sum, r) => sum + r.nominal,
     0,
   );
 
-  const [invoices, setInvoices] = useState<any[]>([]);
-
   useEffect(() => {
-    async function fetchInvoices() {
-      const { data, error } = await supabase.from('invoices').select('*').order('created_at', { ascending: false });
-      if (!error && data) {
-        setInvoices(data);
+    async function fetchData() {
+      const { data: invData, error: invError } = await supabase.from('invoices').select('*').order('created_at', { ascending: false });
+      if (!invError && invData) {
+        setInvoices(invData);
+      }
+      
+      const { data: expData, error: expError } = await supabase.from('expenses').select('*').order('date', { ascending: false });
+      if (!expError && expData) {
+        setExpenses(expData.map(e => ({
+          ...e,
+          tanggal: new Date(e.date).toLocaleDateString(),
+          nominal: Number(e.amount),
+          deskripsi: e.description
+        })));
+      }
+
+      const { data: voucherData } = await supabase.from('hotspot_vouchers').select('*, hotspot_profiles(price, name)').eq('status', 'Used');
+      if (voucherData) {
+        // Group by date and profile
+        const reports: Record<string, any> = {};
+        voucherData.forEach(v => {
+          const date = new Date(v.created_at).toISOString().split('T')[0];
+          const profileName = v.hotspot_profiles?.name || 'Unknown';
+          const price = Number(v.hotspot_profiles?.price || 0);
+          const key = `${date}_${profileName}`;
+          if (!reports[key]) {
+            reports[key] = {
+              id: key,
+              profile: profileName,
+              tanggal: date,
+              jumlah: 0,
+              nominal: 0
+            };
+          }
+          reports[key].jumlah += 1;
+          reports[key].nominal += price;
+        });
+        setVoucherReports(Object.values(reports).sort((a: any, b: any) => b.tanggal.localeCompare(a.tanggal)));
       }
     }
-    fetchInvoices();
+    fetchData();
   }, []);
 
   const invoicePppoe = invoices.filter(
@@ -56,8 +94,8 @@ export default function AccountingPage() {
     (r) => r.type === "Manual" && r.status === 'Paid',
   ).length;
 
-  const totalPemasukan = invoicePppoe + invoiceManual;
-  const totalPengeluaran = MOCK_EXPENSES.filter(
+  const totalPemasukan = invoicePppoe + invoiceManual + expenses.filter(e => e.type === "Pemasukan").reduce((sum, e) => sum + e.nominal, 0);
+  const totalPengeluaran = expenses.filter(
     (e) => e.type === "Pengeluaran",
   ).reduce((sum, e) => sum + e.nominal, 0);
   const totalMargin = totalPemasukan - totalPengeluaran;
@@ -186,7 +224,7 @@ export default function AccountingPage() {
         </div>
 
         <div className="overflow-x-auto">
-          {MOCK_EXPENSES.length === 0 ? (
+          {expenses.length === 0 ? (
             <EmptyState
               title="Data Kosong"
               message="Belum ada transaksi tambahan."
@@ -209,7 +247,7 @@ export default function AccountingPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {MOCK_EXPENSES.map((e, i) => {
+                {expenses.map((e, i) => {
                   const isPemasukan = e.type === "Pemasukan";
                   const badgeClass = isPemasukan
                     ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/50"
@@ -263,7 +301,7 @@ export default function AccountingPage() {
 
         <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-[12px] text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900">
           <div>
-            Showing 1 to {MOCK_EXPENSES.length} of {MOCK_EXPENSES.length}{" "}
+            Showing 1 to {expenses.length} of {expenses.length}{" "}
             entries
           </div>
           <div className="flex items-center gap-1">
@@ -299,7 +337,7 @@ export default function AccountingPage() {
             </div>
           </div>
           <div className="overflow-x-auto flex-1">
-            {MOCK_HOTSPOT_REPORTS.length === 0 ? (
+            {voucherReports.length === 0 ? (
               <EmptyState />
             ) : (
               <table className="w-full text-left text-[13px] whitespace-nowrap table-tight">
@@ -319,7 +357,7 @@ export default function AccountingPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {MOCK_HOTSPOT_REPORTS.map((r, i) => (
+                  {voucherReports.map((r, i) => (
                     <tr
                       key={r.id}
                       className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors align-middle"
@@ -355,8 +393,8 @@ export default function AccountingPage() {
             )}
           </div>
           <div className="p-3 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 font-medium">
-            Showing 1 to {MOCK_HOTSPOT_REPORTS.length} of{" "}
-            {MOCK_HOTSPOT_REPORTS.length} entries
+            Showing 1 to {voucherReports.length} of{" "}
+            {voucherReports.length} entries
           </div>
         </div>
 
@@ -468,9 +506,33 @@ export default function AccountingPage() {
       >
         <form
           className="space-y-5"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            setIsModalOpen(false);
+            const { error } = await supabase.from('expenses').insert({
+              date: addDate,
+              type: addType,
+              amount: Number(addAmount),
+              description: addDesc
+            });
+            if (!error) {
+              setIsModalOpen(false);
+              setAddDate("");
+              setAddType("Pengeluaran");
+              setAddAmount("");
+              setAddDesc("");
+              // Re-fetch expenses
+              const { data } = await supabase.from('expenses').select('*').order('date', { ascending: false });
+              if (data) {
+                setExpenses(data.map(exp => ({
+                  ...exp,
+                  tanggal: new Date(exp.date).toLocaleDateString(),
+                  nominal: Number(exp.amount),
+                  deskripsi: exp.description
+                })));
+              }
+            } else {
+              alert("Failed to save expense: " + error.message);
+            }
           }}
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -480,7 +542,7 @@ export default function AccountingPage() {
                 required
                 tooltip="Tanggal transaksi pemasukan atau pengeluaran."
               />
-              <input type="date" required className={inputClasses} />
+              <input type="date" required value={addDate} onChange={e => setAddDate(e.target.value)} className={inputClasses} />
             </div>
             <div>
               <FormLabel
@@ -488,7 +550,7 @@ export default function AccountingPage() {
                 required
                 tooltip="Pilih jenis transaksi: Pemasukan atau Pengeluaran."
               />
-              <select className={selectClasses}>
+              <select value={addType} onChange={e => setAddType(e.target.value)} className={selectClasses}>
                 <option value="Pemasukan">Pemasukan</option>
                 <option value="Pengeluaran">Pengeluaran</option>
               </select>
@@ -504,6 +566,8 @@ export default function AccountingPage() {
               type="number"
               required
               placeholder="Contoh: 150000"
+              value={addAmount}
+              onChange={e => setAddAmount(e.target.value)}
               className={inputClasses}
             />
           </div>
@@ -515,6 +579,8 @@ export default function AccountingPage() {
             <textarea
               rows={3}
               placeholder="Tulis catatan transaksi..."
+              value={addDesc}
+              onChange={e => setAddDesc(e.target.value)}
               className={`${inputClasses} resize-none`}
             ></textarea>
           </div>

@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Search,
   ArrowUpDown,
@@ -15,7 +15,7 @@ import ColumnToggle, {
   type ColDef,
   initVisible,
 } from "../../../components/ColumnToggle";
-import { MOCK_LOGS } from "../../router/constants";
+import { supabase } from "../../../services/supabase";
 import Modal from "../../../components/Modal";
 import EmptyState from "../../../components/EmptyState";
 import PaginationControls from "../../../components/PaginationControls";
@@ -116,9 +116,22 @@ export default function LogList() {
   const [searchTerm, setSearchTerm] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedLog, setSelectedLog] = useState<(typeof MOCK_LOGS)[0] | null>(
-    null,
-  );
+  const [selectedLog, setSelectedLog] = useState<any | null>(null);
+
+  const [logs, setLogs] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function fetchLogs() {
+      const { data, error } = await supabase.from('logs').select('*').order('created_at', { ascending: false });
+      if (!error && data) {
+        setLogs(data.map(l => ({
+          ...l,
+          timestamp: new Date(l.created_at).toLocaleString()
+        })));
+      }
+    }
+    fetchLogs();
+  }, []);
   const [visibleCols, setVisibleCols] = useState(() => initVisible(LOG_COLS));
 
   // Mobile expand
@@ -147,7 +160,7 @@ export default function LogList() {
       <ArrowDown size={12} />
     );
 
-  const filtered = MOCK_LOGS.filter(
+  const filtered = logs.filter(
     (l) =>
       (searchTerm === "" ||
         l.description.toLowerCase().includes(searchTerm.toLowerCase()) ||

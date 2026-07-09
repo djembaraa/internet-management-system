@@ -10,7 +10,6 @@ import {
     ResponsiveContainer,
 } from "recharts";
 import { AlertCircle } from "lucide-react";
-import { MOCK_CLIENT_CONNECTION } from "../../router/constants";
 import { useThemeStore } from "../../../store/themeStore";
 import { supabase } from "../../../services/supabase";
 import { useAuthStore } from "../../auth/store/authStore";

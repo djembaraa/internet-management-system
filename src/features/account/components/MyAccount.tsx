@@ -19,7 +19,7 @@ import ConfirmDeleteModal from "../../../components/ConfirmDeleteModal";
 import EmptyState from "../../../components/EmptyState";
 import { useAuthStore } from "../../auth/store/authStore";
 import ActionButton from "../../../components/ActionButton";
-import { MOCK_SUB_ACCOUNTS, type SubAccount } from "../constants";
+import { type SubAccount } from "../constants";
 
 import { supabase } from "../../../services/supabase";
 
@@ -71,7 +71,7 @@ export default function MyAccount() {
   const [confirmPassword, setConfirmPassword] = useState("");
 
   /* ─── Sub Account state ─── */
-  const [subAccounts] = useState<SubAccount[]>(MOCK_SUB_ACCOUNTS);
+  const [subAccounts, setSubAccounts] = useState<SubAccount[]>([]);
   const [addUserOpen, setAddUserOpen] = useState(false);
   const [addUsername, setAddUsername] = useState("");
   const [addPassword, setAddPassword] = useState("");

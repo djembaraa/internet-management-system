@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Plus,
   Edit,
@@ -16,13 +16,35 @@ import FormLabel from "../../../components/FormLabel";
 import ConfirmDeleteModal from "../../../components/ConfirmDeleteModal";
 import EmptyState from "../../../components/EmptyState";
 import ActionButton from "../../../components/ActionButton";
-import { MOCK_ROOT_USERS as MOCK_USERS, type UserItem } from "../constants";
+import { supabase } from "../../../services/supabase";
+import { Router, Users, Ticket } from "lucide-react";
 
 /* ─── Component ─── */
 export default function UserList() {
-  const [users] = useState<UserItem[]>(MOCK_USERS);
+  const [users, setUsers] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchData() {
+      const { data, error } = await supabase.from('profiles').select('*');
+      if (!error && data) {
+        setUsers(data.map(p => ({
+          id: p.id,
+          fullname: p.full_name || p.username,
+          username: p.username,
+          lastLogin: new Date(p.created_at).toLocaleDateString(),
+          packages: p.role,
+          resources: [
+            { icon: Router, label: "Router", used: 1, limit: 1, color: "text-blue-500" },
+            { icon: Users, label: "Client", used: 10, limit: 100, color: "text-emerald-500" },
+            { icon: Ticket, label: "Voucher", used: 50, limit: 1000, color: "text-amber-500" }
+          ]
+        })));
+      }
+    }
+    fetchData();
+  }, []);
 
   // Add modal state
   const [addOpen, setAddOpen] = useState(false);
@@ -48,11 +70,11 @@ export default function UserList() {
 
   // Info modal
   const [infoOpen, setInfoOpen] = useState(false);
-  const [infoUser, setInfoUser] = useState<UserItem | null>(null);
+  const [infoUser, setInfoUser] = useState<any | null>(null);
 
   // Edit modal state
   const [editOpen, setEditOpen] = useState(false);
-  const [, setEditUser] = useState<UserItem | null>(null);
+  const [, setEditUser] = useState<any | null>(null);
   const [editFullname, setEditFullname] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [editUsername, setEditUsername] = useState("");
@@ -75,7 +97,7 @@ export default function UserList() {
 
   // Delete modal
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [, setDeleteUser] = useState<UserItem | null>(null);
+  const [, setDeleteUser] = useState<any | null>(null);
 
   const filtered = users.filter(
     (u) =>
@@ -84,12 +106,12 @@ export default function UserList() {
       u.packages.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
-  const handleInfoClick = (user: UserItem) => {
+  const handleInfoClick = (user: any) => {
     setInfoUser(user);
     setInfoOpen(true);
   };
 
-  const handleEditClick = (user: UserItem) => {
+  const handleEditClick = (user: any) => {
     setEditUser(user);
     setEditFullname(user.fullname);
     setEditEmail("");
@@ -114,7 +136,7 @@ export default function UserList() {
     setEditOpen(true);
   };
 
-  const handleDeleteClick = (user: UserItem) => {
+  const handleDeleteClick = (user: any) => {
     setDeleteUser(user);
     setDeleteOpen(true);
   };

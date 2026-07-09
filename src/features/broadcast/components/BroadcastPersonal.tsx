@@ -1,22 +1,31 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Send, UserRound, Search, Info, } from "lucide-react";
-import { MOCK_BROADCAST_USERS } from "../constants";
+import { supabase } from "../../../services/supabase";
 
 export default function BroadcastPersonal() {
-  const [recipient, setRecipient] = useState<number | null>(null);
+  const [recipient, setRecipient] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [via, setVia] = useState<"whatsapp" | "telegram">("whatsapp");
   const [searchQuery, setSearchQuery] = useState("");
+  const [users, setUsers] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function fetchData() {
+      const { data: profiles } = await supabase.from('profiles').select('*');
+      if (profiles) setUsers(profiles.map(p => ({ id: p.id, name: p.full_name || p.username, phone: '-' })));
+    }
+    fetchData();
+  }, []);
 
   const filteredUsers = useMemo(() => {
-    return MOCK_BROADCAST_USERS.filter(
+    return users.filter(
       (u) =>
         u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         u.phone.includes(searchQuery)
     );
-  }, [searchQuery]);
+  }, [searchQuery, users]);
 
-  const selectedUser = MOCK_BROADCAST_USERS.find((u) => u.id === recipient);
+  const selectedUser = users.find((u) => u.id === recipient);
 
   const inputClasses =
     "w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3.5 py-2.5 outline-none focus:border-[#155b96] focus:ring-2 focus:ring-[#155b96]/10 text-[13px] bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-all";

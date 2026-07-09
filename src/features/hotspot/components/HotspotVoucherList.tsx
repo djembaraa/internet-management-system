@@ -1,4 +1,4 @@
-﻿import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   Plus,
   Trash2,
@@ -36,10 +36,7 @@ import Modal from "../../../components/Modal";
 import FormLabel from "../../../components/FormLabel";
 import ConfirmDeleteModal from "../../../components/ConfirmDeleteModal";
 import SummaryStats from "../../../components/SummaryStats";
-import {
-  MOCK_VOUCHER_ITEMS as MOCK_VOUCHERS,
-  type VoucherItem as Voucher,
-} from "../constants";
+import { supabase } from "../../../services/supabase";
 
 export default function HotspotVoucherList() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -65,10 +62,33 @@ export default function HotspotVoucherList() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteVoucher, setDeleteVoucher] = useState<Voucher | null>(null);
 
-  // Refresh state: "idle" | "loading" | "success"
   const [refreshState, setRefreshState] = useState<
     "idle" | "loading" | "success"
   >("idle");
+
+  const [vouchers, setVouchers] = useState<any[]>([]);
+  const [profiles, setProfiles] = useState<any[]>([]);
+
+  const fetchVouchers = async () => {
+    const { data, error } = await supabase.from("hotspot_vouchers").select("*, hotspot_profiles(name)");
+    if (!error && data) {
+      setVouchers(data.map((v: any) => ({
+        ...v,
+        profile: v.hotspot_profiles?.name || "-",
+        masaBerlaku: v.validity
+      })));
+    }
+  };
+
+  const fetchProfiles = async () => {
+    const { data } = await supabase.from("hotspot_profiles").select("id, name");
+    if (data) setProfiles(data);
+  };
+
+  useEffect(() => {
+    fetchVouchers();
+    fetchProfiles();
+  }, []);
 
   // Mobile expand
   const [expandedMobileId, setExpandedMobileId] = useState<number | null>(null);
@@ -84,7 +104,7 @@ export default function HotspotVoucherList() {
   const selectClasses =
     "w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3.5 py-2 outline-none focus:border-[#155b96] text-sm bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-100 appearance-none";
 
-  const filtered = MOCK_VOUCHERS.filter(
+  const filtered = vouchers.filter(
     (v) =>
       (searchTerm === "" ||
         v.username.toLowerCase().includes(searchTerm.toLowerCase())) &&
@@ -117,20 +137,19 @@ export default function HotspotVoucherList() {
     return sortOrder === "asc" ? av.localeCompare(bv) : bv.localeCompare(av);
   });
 
-  const handleRefresh = useCallback(() => {
+  const handleRefresh = useCallback(async () => {
     setRefreshState("loading");
-    setTimeout(() => {
-      setRefreshState("success");
-      setTimeout(() => setRefreshState("idle"), 1500);
-    }, 1200);
+    await fetchVouchers();
+    setRefreshState("success");
+    setTimeout(() => setRefreshState("idle"), 1500);
   }, []);
 
-  const handleInfoClick = (voucher: Voucher) => {
+  const handleInfoClick = (voucher: any) => {
     setInfoVoucher(voucher);
     setInfoModalOpen(true);
   };
 
-  const handleDeleteClick = (voucher: Voucher) => {
+  const handleDeleteClick = (voucher: any) => {
     setDeleteVoucher(voucher);
     setDeleteModalOpen(true);
   };
@@ -177,19 +196,19 @@ export default function HotspotVoucherList() {
         items={[
           {
             label: "Available",
-            value: MOCK_VOUCHERS.filter((v) => v.status === "Available").length,
+            value: vouchers.filter((v) => v.status === "Available").length,
             icon: <CheckCircle size={18} />,
             color: "emerald",
           },
           {
             label: "In Use",
-            value: MOCK_VOUCHERS.filter((v) => v.status === "Used").length,
+            value: vouchers.filter((v) => v.status === "Used").length,
             icon: <Clock size={18} />,
             color: "amber",
           },
           {
             label: "Expired",
-            value: MOCK_VOUCHERS.filter((v) => v.status === "Expired").length,
+            value: vouchers.filter((v) => v.status === "Expired").length,
             icon: <XCircle size={18} />,
             color: "red",
           },
@@ -263,7 +282,7 @@ export default function HotspotVoucherList() {
                 className="border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 outline-none focus:border-[#155b96] text-[13px] bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-100"
               >
                 <option value="">Semua</option>
-                {[...new Set(MOCK_VOUCHERS.map((v) => v.profile))].map((p) => (
+                {[...new Set(vouchers.map((v) => v.profile))].map((p) => (
                   <option key={p} value={p}>
                     {p}
                   </option>
@@ -402,7 +421,7 @@ export default function HotspotVoucherList() {
                         MAC Address
                       </p>
                       <p className="text-[12px] font-mono text-slate-500 dark:text-slate-100">
-                        {voucher.macAddress || "-"}
+                        {voucher.mac_address || "-"}
                       </p>
                     </div>
                     <div className="col-span-2 pt-1 flex gap-1">
@@ -551,11 +570,9 @@ export default function HotspotVoucherList() {
                     </span>
                   </td>
                 )}
-                {visibleCols["macAddress"] !== false && (
                   <td className="px-5 py-3.5 text-slate-500 dark:text-slate-100">
-                    {voucher.macAddress || ""}
+                    {voucher.mac_address || ""}
                   </td>
-                )}
                 <td className="px-5 py-3.5">
                   <div className="flex justify-center gap-1">
                     <ActionButton
@@ -644,19 +661,27 @@ export default function HotspotVoucherList() {
       >
         <form
           className="space-y-4"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            console.log("Generate vouchers:", {
-              genJumlah,
-              genProfile,
-              genMode,
-              genLength,
-              genKomposisi,
-              genPrefix,
-              genPrint,
-            });
-            setGenerateModalOpen(false);
-            resetGenerateForm();
+            const num = Number(genJumlah) || 1;
+            const newVouchers = [];
+            for (let i = 0; i < num; i++) {
+              newVouchers.push({
+                username: genPrefix + Math.random().toString(36).substring(2, 2 + Number(genLength)).toUpperCase(),
+                password: genMode.includes("Password") ? Math.random().toString(36).substring(2, 6) : null,
+                profile_id: genProfile,
+                validity: "1d", // Mock validity mapping
+                status: "Available"
+              });
+            }
+            const { error } = await supabase.from('hotspot_vouchers').insert(newVouchers);
+            if (!error) {
+              setGenerateModalOpen(false);
+              resetGenerateForm();
+              fetchVouchers();
+            } else {
+              alert("Failed to generate vouchers: " + error.message);
+            }
           }}
         >
           <div>
@@ -689,10 +714,7 @@ export default function HotspotVoucherList() {
               className={selectClasses}
             >
               <option value="">Pilih Profile</option>
-              <option value="asd">asd</option>
-              <option value="Voucher 2 Jam">Voucher 2 Jam</option>
-              <option value="Voucher 1 Hari">Voucher 1 Hari</option>
-              <option value="Voucher 1 Minggu">Voucher 1 Minggu</option>
+              {profiles.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </div>
 
@@ -841,7 +863,7 @@ export default function HotspotVoucherList() {
                 Mac Address:
               </span>
               <span className="text-sm text-slate-600 dark:text-slate-100">
-                {infoVoucher.macAddress || "-"}
+                {infoVoucher.mac_address || "-"}
               </span>
             </div>
             <div className="flex items-baseline gap-2">
@@ -879,9 +901,17 @@ export default function HotspotVoucherList() {
           setDeleteModalOpen(false);
           setDeleteVoucher(null);
         }}
-        onConfirm={() => {
-          console.log("Delete voucher:", deleteVoucher?.id);
-          setDeleteVoucher(null);
+        onConfirm={async () => {
+          if (deleteVoucher?.id) {
+            const { error } = await supabase.from('hotspot_vouchers').delete().eq('id', deleteVoucher.id);
+            if (!error) {
+              setDeleteVoucher(null);
+              setDeleteModalOpen(false);
+              fetchVouchers();
+            } else {
+              alert("Failed to delete voucher: " + error.message);
+            }
+          }
         }}
         itemCount={1}
       />

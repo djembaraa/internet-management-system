@@ -15,10 +15,7 @@ import FormLabel from "../../../components/FormLabel";
 import ConfirmDeleteModal from "../../../components/ConfirmDeleteModal";
 import EmptyState from "../../../components/EmptyState";
 import ActionButton from "../../../components/ActionButton";
-import {
-  MOCK_ROOT_PACKAGES as MOCK_PACKAGES,
-  type UserPackage,
-} from "../constants";
+import { type UserPackage } from "../constants";
 
 // Helper for modern toggle switch
 function ToggleSwitch({
@@ -54,7 +51,7 @@ function ToggleSwitch({
 }
 
 export default function UserPackageList() {
-  const [packages] = useState<UserPackage[]>(MOCK_PACKAGES);
+  const [packages, setPackages] = useState<UserPackage[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedId, setExpandedId] = useState<number | null>(null);
 

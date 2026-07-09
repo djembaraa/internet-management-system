@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Plus,
   Edit,
@@ -30,10 +30,7 @@ import Modal from "../../../components/Modal";
 import FormLabel from "../../../components/FormLabel";
 import SummaryStats from "../../../components/SummaryStats";
 import ConfirmDeleteModal from "../../../components/ConfirmDeleteModal";
-import {
-  MOCK_HOTSPOT_PROFILE_ITEMS as MOCK_HOTSPOT_PROFILES,
-  type HotspotProfileItem as HotspotProfile,
-} from "../constants";
+import { supabase } from "../../../services/supabase";
 
 /** Shared "Masa Berlaku" info block — declared outside render to avoid recreation */
 function MasaBerlakuInfo() {
@@ -54,6 +51,19 @@ export default function HotspotProfileList() {
   const [visibleCols, setVisibleCols] = useState(() =>
     initVisible(HOTSPOT_PROFILE_COLS),
   );
+  
+  const [profiles, setProfiles] = useState<any[]>([]);
+  
+  const fetchProfiles = async () => {
+    const { data, error } = await supabase.from("hotspot_profiles").select("*").order("created_at", { ascending: false });
+    if (!error && data) {
+      setProfiles(data);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfiles();
+  }, []);
 
   // Add modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -76,9 +86,7 @@ export default function HotspotProfileList() {
 
   // Delete modal
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [deleteProfile, setDeleteProfile] = useState<HotspotProfile | null>(
-    null,
-  );
+  const [deleteProfile, setDeleteProfile] = useState<any | null>(null);
 
   // Mobile expand
   const [expandedMobileId, setExpandedMobileId] = useState<number | null>(null);
@@ -90,7 +98,7 @@ export default function HotspotProfileList() {
   const inputClasses =
     "w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3.5 py-2 outline-none focus:border-[#155b96] focus:ring-2 focus:ring-[#155b96]/10 text-sm bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500";
 
-  const filtered = MOCK_HOTSPOT_PROFILES.filter(
+  const filtered = profiles.filter(
     (p) =>
       (searchTerm === "" ||
         p.name.toLowerCase().includes(searchTerm.toLowerCase())) &&
@@ -131,18 +139,18 @@ export default function HotspotProfileList() {
     setAddAdvanced(false);
   };
 
-  const handleEditClick = (profile: HotspotProfile) => {
+  const handleEditClick = (profile: any) => {
     setEditProfile(profile);
     setEditName(profile.name);
     setEditPrice(profile.price);
     setEditLocalProfile(profile.localProfile || "ais");
     setEditValidity(profile.validity);
-    setEditRateLimit(profile.rateLimit);
+    setEditRateLimit("");
     setEditAdvanced(false);
     setEditModalOpen(true);
   };
 
-  const handleDeleteClick = (profile: HotspotProfile) => {
+  const handleDeleteClick = (profile: any) => {
     setDeleteProfile(profile);
     setDeleteModalOpen(true);
   };
@@ -166,7 +174,7 @@ export default function HotspotProfileList() {
         items={[
           {
             label: "Total Profile",
-            value: MOCK_HOTSPOT_PROFILES.length,
+            value: profiles.length,
             icon: <Layers size={18} />,
             color: "blue",
           },
@@ -217,7 +225,7 @@ export default function HotspotProfileList() {
                 className="border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 outline-none focus:border-[#155b96] text-[13px] bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-100"
               >
                 <option value="">Semua</option>
-                {[...new Set(MOCK_HOTSPOT_PROFILES.map((p) => p.validity))].map(
+                {[...new Set(profiles.map((p) => p.validity))].map(
                   (v) => (
                     <option key={v} value={v}>
                       {v}
@@ -300,7 +308,7 @@ export default function HotspotProfileList() {
                         Shared Users
                       </p>
                       <p className="text-[12px] text-slate-600 dark:text-slate-100">
-                        {profile.sharedUsers}
+                        {profile.limit_users || 1}
                       </p>
                     </div>
                     <div>
@@ -308,7 +316,7 @@ export default function HotspotProfileList() {
                         Rate Limit
                       </p>
                       <p className="text-[12px] font-mono text-slate-500 dark:text-slate-100">
-                        {profile.rateLimit}
+                        -
                       </p>
                     </div>
                     <div>
@@ -436,12 +444,12 @@ export default function HotspotProfileList() {
                 )}
                 {visibleCols["sharedUsers"] !== false && (
                   <td className="px-5 py-3.5 text-slate-500 dark:text-slate-100">
-                    {profile.sharedUsers}
+                    {profile.limit_users || 1}
                   </td>
                 )}
                 {visibleCols["rateLimit"] !== false && (
                   <td className="px-5 py-3.5 font-mono text-[12px] text-slate-500 dark:text-slate-100">
-                    {profile.rateLimit}
+                    -
                   </td>
                 )}
                 {visibleCols["validity"] !== false && (
@@ -515,18 +523,21 @@ export default function HotspotProfileList() {
       >
         <form
           className="space-y-4"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            console.log("Add hotspot profile:", {
-              addName,
-              addPrice,
-              addLocalProfile,
-              addValidity,
-              addRateLimit,
-              addAdvanced,
+            const { error } = await supabase.from('hotspot_profiles').insert({
+              name: addName,
+              price: Number(addPrice) || 0,
+              validity: addValidity,
+              limit_users: 1
             });
-            setIsModalOpen(false);
-            resetAddForm();
+            if (!error) {
+              setIsModalOpen(false);
+              resetAddForm();
+              fetchProfiles();
+            } else {
+              alert("Failed to add hotspot profile: " + error.message);
+            }
           }}
         >
           <div>
@@ -625,18 +636,21 @@ export default function HotspotProfileList() {
       >
         <form
           className="space-y-4"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            console.log("Edit hotspot profile:", editProfile?.id, {
-              editName,
-              editPrice,
-              editLocalProfile,
-              editValidity,
-              editRateLimit,
-              editAdvanced,
-            });
-            setEditModalOpen(false);
-            setEditProfile(null);
+            if (!editProfile?.id) return;
+            const { error } = await supabase.from('hotspot_profiles').update({
+              name: editName,
+              price: Number(editPrice) || 0,
+              validity: editValidity,
+            }).eq('id', editProfile.id);
+            if (!error) {
+              setEditModalOpen(false);
+              setEditProfile(null);
+              fetchProfiles();
+            } else {
+              alert("Failed to update hotspot profile: " + error.message);
+            }
           }}
         >
           <div>
@@ -726,9 +740,17 @@ export default function HotspotProfileList() {
           setDeleteModalOpen(false);
           setDeleteProfile(null);
         }}
-        onConfirm={() => {
-          console.log("Delete hotspot profile:", deleteProfile?.id);
-          setDeleteProfile(null);
+        onConfirm={async () => {
+          if (deleteProfile?.id) {
+            const { error } = await supabase.from('hotspot_profiles').delete().eq('id', deleteProfile.id);
+            if (!error) {
+              setDeleteProfile(null);
+              setDeleteModalOpen(false);
+              fetchProfiles();
+            } else {
+              alert("Failed to delete hotspot profile: " + error.message);
+            }
+          }
         }}
         itemCount={1}
       />
