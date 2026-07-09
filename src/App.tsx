@@ -61,15 +61,15 @@ function ComingSoon({ title }: { title: string }) {
 }
 
 function RoleDashboard() {
-  const { user } = useAuthStore();
-  if (user?.role === "client") return <ClientDashboard />;
-  if (user?.role === "root") return <RootDashboard />;
+  const { role } = useAuthStore();
+  if (role === "client") return <ClientDashboard />;
+  if (role === "root") return <RootDashboard />;
   return <Dashboard />;
 }
 
 function AdminRoute({ children }: { children: React.ReactNode }) {
-  const { user } = useAuthStore();
-  if (user?.role === "client") {
+  const { role } = useAuthStore();
+  if (role === "client") {
     return <Navigate to="/" replace />;
   }
   return <>{children}</>;

@@ -1,4 +1,4 @@
-﻿import { useState, useRef } from "react";
+import { useState, useRef } from "react";
 import {
   Save,
   Plus,
@@ -21,6 +21,8 @@ import { useAuthStore } from "../../auth/store/authStore";
 import ActionButton from "../../../components/ActionButton";
 import { MOCK_SUB_ACCOUNTS, type SubAccount } from "../constants";
 
+import { supabase } from "../../../services/supabase";
+
 /* ─── Tabs ─── */
 const TABS = [
   { id: "My Account", icon: UserIcon },
@@ -29,15 +31,30 @@ const TABS = [
 type Tab = (typeof TABS)[number]["id"];
 
 export default function MyAccount() {
-  useAuthStore();
+  const { user, profile } = useAuthStore();
   const [activeTab, setActiveTab] = useState<Tab>("My Account");
 
   /* ─── My Account state ─── */
-  const [username] = useState("nizar");
+  const [username, setUsername] = useState("");
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [contact, setContact] = useState("");
+  const [address, setAddress] = useState("");
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (profile) {
+      setUsername(profile.username || "");
+      setFullName(profile.full_name || "");
+      setEmail(profile.email || user?.email || "");
+      setContact(profile.phone || "");
+      setAddress(profile.address || "");
+    } else if (user) {
+      setEmail(user.email || "");
+    }
+  }, [profile, user]);
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -158,8 +175,8 @@ export default function MyAccount() {
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <span className="text-3xl font-bold text-white">
-                            {username[0].toUpperCase()}
+                          <span className="text-3xl font-bold text-white uppercase">
+                            {fullName?.[0] || username?.[0] || "U"}
                           </span>
                         )}
                       </div>
@@ -217,20 +234,31 @@ export default function MyAccount() {
                         title="Username tidak dapat diubah"
                       />
                     </div>
-                    {/* Email */}
+                    {/* Full Name */}
                     <div>
-                      <FormLabel label="Email Address" />
+                      <FormLabel label="Full Name" required />
                       <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="mail@example.com"
+                        type="text"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        placeholder="John Doe"
                         className={inputClasses}
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    {/* Email */}
+                    <div>
+                      <FormLabel label="Email Address" required />
+                      <input
+                        type="email"
+                        value={email}
+                        readOnly
+                        className={readonlyClasses}
+                        title="Email tidak dapat diubah dari sini"
+                      />
+                    </div>
                     {/* Contact */}
                     <div>
                       <FormLabel label="Phone Number" required />
@@ -242,6 +270,23 @@ export default function MyAccount() {
                         className={inputClasses}
                       />
                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    {/* Address */}
+                    <div className="sm:col-span-2">
+                      <FormLabel label="Address" />
+                      <input
+                        type="text"
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                        placeholder="Alamat Lengkap"
+                        className={inputClasses}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     {/* Account Expiration */}
                     <div>
                       <FormLabel label="Account Expiration" />
@@ -293,8 +338,36 @@ export default function MyAccount() {
 
                 {/* Submit */}
                 <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800 flex justify-end">
-                  <button className="flex items-center justify-center w-full sm:w-auto gap-2 bg-[#155b96] hover:bg-[#0e4a7a] text-white px-8 py-2.5 rounded-lg text-[13px] font-semibold transition-all shadow-sm hover:shadow-md active:scale-[0.98]">
-                    <Save size={16} /> Save Changes
+                  <button 
+                    onClick={async () => {
+                      if (!user?.id) return;
+                      setIsSaving(true);
+                      try {
+                        const { error } = await supabase
+                          .from('profiles')
+                          .update({
+                            full_name: fullName,
+                            phone: contact,
+                            address: address,
+                          })
+                          .eq('id', user.id);
+                        
+                        if (error) throw error;
+                        
+                        alert("Profile updated successfully!");
+                        // Refresh the global state
+                        const { setAuth } = useAuthStore.getState();
+                        await setAuth(null, user); // Hack to trigger profile refetch in store if we didn't pass session
+                        
+                      } catch (err: any) {
+                        alert("Failed to update profile: " + err.message);
+                      } finally {
+                        setIsSaving(false);
+                      }
+                    }}
+                    disabled={isSaving}
+                    className="flex items-center justify-center w-full sm:w-auto gap-2 bg-[#155b96] hover:bg-[#0e4a7a] text-white px-8 py-2.5 rounded-lg text-[13px] font-semibold transition-all shadow-sm hover:shadow-md active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed">
+                    <Save size={16} /> {isSaving ? "Saving..." : "Save Changes"}
                   </button>
                 </div>
               </div>
@@ -483,17 +556,25 @@ export default function MyAccount() {
       >
         <form
           className="space-y-5"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            console.log("Change password:", {
-              oldPassword,
-              newPassword,
-              confirmPassword,
-            });
-            setChangePasswordOpen(false);
-            setOldPassword("");
-            setNewPassword("");
-            setConfirmPassword("");
+            if (newPassword !== confirmPassword) {
+              alert("New password and confirm password do not match!");
+              return;
+            }
+            try {
+              const { error } = await supabase.auth.updateUser({
+                password: newPassword
+              });
+              if (error) throw error;
+              alert("Password changed successfully!");
+              setChangePasswordOpen(false);
+              setOldPassword("");
+              setNewPassword("");
+              setConfirmPassword("");
+            } catch (err: any) {
+              alert("Failed to change password: " + err.message);
+            }
           }}
         >
           <div className="space-y-4">

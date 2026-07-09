@@ -163,7 +163,7 @@ function isMenuActive(pathname: string, menu: NavMenu): boolean {
 export default function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuthStore();
+  const { user, profile, role, logout } = useAuthStore();
   const { theme, toggleTheme } = useThemeStore();
 
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -202,8 +202,8 @@ export default function Layout() {
   const toggle = (name: string) =>
     setOpenDrop((p) => (p === name ? null : name));
 
-  const isClient = user?.role === "client";
-  const isRoot = user?.role === "root";
+  const isClient = role === "client";
+  const isRoot = role === "root";
   const navMenus = isClient
     ? CLIENT_NAV_MENUS
     : isRoot
@@ -251,16 +251,16 @@ export default function Layout() {
             </div>
             <div className="text-right">
               <p className="text-sm font-semibold leading-tight text-slate-700 dark:text-slate-100">
-                {user?.email || "nizar"}
+                {profile?.full_name || profile?.username || user?.email || "Unknown"}
               </p>
               <p className="text-[11px] text-slate-400 dark:text-slate-100 capitalize leading-tight">
-                {isClient
+                {role === "client"
                   ? "User"
-                  : isRoot
+                  : role === "root"
                     ? "Super Admin"
-                    : user?.role === "admin"
+                    : role === "admin"
                       ? "Admin"
-                      : user?.role || "Admin"}
+                      : role || "Admin"}
               </p>
             </div>
           </Link>
@@ -396,10 +396,10 @@ export default function Layout() {
           </div>
           <div className="min-w-0">
             <p className="text-sm font-semibold text-slate-700 dark:text-slate-100 truncate">
-              {user?.email || "nizar"}
+              {profile?.full_name || profile?.username || user?.email || "Unknown"}
             </p>
             <p className="text-[11px] text-slate-400 capitalize">
-              {user?.role || "Admin"}
+              {role || "Admin"}
             </p>
           </div>
         </Link>
