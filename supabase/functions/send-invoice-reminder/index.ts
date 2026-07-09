@@ -1,7 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
-// Fungsi utilitas kecil untuk merespons CORS
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -14,7 +13,6 @@ serve(async (req) => {
   }
 
   try {
-    // 2. Inisialisasi Supabase Client menggunakan service_role key agar memiliki akses bypass RLS
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
     
@@ -24,7 +22,6 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // 3. Ambil semua invoice yang statusnya 'Unpaid'
     const { data: invoices, error: invoiceError } = await supabase
       .from("invoices")
       .select("*, profiles(email)")
@@ -38,15 +35,12 @@ serve(async (req) => {
       );
     }
 
-    // 4. Integrasi Layanan Email (Menggunakan Resend API sebagai ganti SMTP Nodemailer agar kompatibel dengan Deno Edge)
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
     if (!RESEND_API_KEY) throw new Error("Missing Resend API Key");
 
     let sentCount = 0;
 
     for (const invoice of invoices) {
-      // Kami asumsikan relasi profiles -> auth.users memiliki email, tapi Supabase menyimpan email di auth.users.
-      // Jika profile.email kosong, maka kita skip
       const clientEmail = invoice.profiles?.email || "customer@example.com"; 
       
       const emailHtml = `
@@ -62,7 +56,6 @@ serve(async (req) => {
         </div>
       `;
 
-      // Mengirim POST request ke Resend
       const res = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: {
@@ -80,7 +73,6 @@ serve(async (req) => {
       if (res.ok) sentCount++;
     }
 
-    // 5. Kembalikan Response Sukses
     return new Response(
       JSON.stringify({ message: `Berhasil mengirim ${sentCount} email peringatan.` }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
