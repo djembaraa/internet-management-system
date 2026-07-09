@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { createClient } from "npm:@supabase/supabase-js@2";
+import nodemailer from "npm:nodemailer";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -34,8 +35,22 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-    if (!RESEND_API_KEY) throw new Error("Missing Resend API Key");
+    // Gmail SMTP credentials
+    const GMAIL_USER = Deno.env.get("GMAIL_USER");
+    const GMAIL_APP_PASSWORD = Deno.env.get("GMAIL_APP_PASSWORD");
+
+    if (!GMAIL_USER || !GMAIL_APP_PASSWORD) {
+      throw new Error("Missing Gmail credentials (GMAIL_USER or GMAIL_APP_PASSWORD)");
+    }
+
+    // Setup Nodemailer transporter
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: GMAIL_USER,
+        pass: GMAIL_APP_PASSWORD,
+      },
+    });
 
     let sentCount = 0;
 
@@ -56,25 +71,21 @@ Deno.serve(async (req: Request) => {
         </div>
       `;
 
-      const res = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${RESEND_API_KEY}`,
-        },
-        body: JSON.stringify({
-          from: "Billing DJ IMS <billing@resend.dev>",
-          to: [clientEmail],
+      try {
+        await transporter.sendMail({
+          from: `"Billing DJ IMS" <${GMAIL_USER}>`,
+          to: clientEmail,
           subject: `Tagihan Belum Dibayar: ${invoice.serial}`,
           html: emailHtml,
-        }),
-      });
-
-      if (res.ok) sentCount++;
+        });
+        sentCount++;
+      } catch (err) {
+        console.error("Gagal mengirim email ke", clientEmail, err);
+      }
     }
 
     return new Response(
-      JSON.stringify({ message: `Berhasil mengirim ${sentCount} email peringatan.` }),
+      JSON.stringify({ message: `Berhasil mengirim ${sentCount} email peringatan via Gmail.` }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: unknown) {
