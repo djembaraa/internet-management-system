@@ -85,21 +85,22 @@ export default function InvoiceManual() {
   );
   const [invoices, setInvoices] = useState<ManualInvoice[]>([]);
 
-  useEffect(() => {
-    async function fetchData() {
-      const { data } = await supabase.from('invoices').select('*').order('created_at', { ascending: false });
-      if (data) {
-        setInvoices(data.map(i => ({
-          id: i.id,
-          fullname: i.client_id,
-          description: "Monthly Internet Bill",
-          date: new Date(i.created_at).toLocaleDateString(),
-          amount: "Rp " + i.amount.toLocaleString(),
-          status: i.status === "Unpaid" ? "Unpaid" : "Paid",
-          serial: i.invoice_number || `INV-${i.id.substring(0,6)}`
-        })));
-      }
+  const fetchData = async () => {
+    const { data } = await supabase.from('invoices').select('*').order('created_at', { ascending: false });
+    if (data) {
+      setInvoices(data.map(i => ({
+        id: i.id,
+        fullname: i.fullname || i.client_id || "Unknown",
+        description: i.type === 'Manual' ? 'Manual Invoice' : "Monthly Internet Bill",
+        date: new Date(i.created_at).toLocaleDateString(),
+        amount: "Rp " + i.amount.toLocaleString(),
+        status: i.status === "Unpaid" ? "Unpaid" : "Paid",
+        serial: i.serial || i.invoice_number || `INV-${i.id.substring(0,6)}`
+      })));
     }
+  };
+
+  useEffect(() => {
     fetchData();
   }, []);
 
@@ -721,40 +722,27 @@ export default function InvoiceManual() {
           onSubmit={(e) => {
             e.preventDefault();
             if (isModalOpen) {
-              console.log("Add manual invoice:", {
-                fullName,
-                draft,
-                status,
-                contact,
-                email,
-                issuedDate,
-                dueDate,
-                downPayment,
-                repeated,
-                addTax,
-                percentTax,
-                instruction,
-                memo,
-                lineItems,
+              const amount = lineItems.reduce((acc, curr) => acc + (parseInt(curr.harga) || 0) * (parseInt(curr.quantity) || 1), 0);
+              supabase.from('invoices').insert([{
+                fullname: fullName,
+                serial: `INV-M-${Math.floor(100000 + Math.random() * 900000)}`,
+                amount: amount,
+                status: status,
+                type: 'Manual',
+                due_date: dueDate ? new Date(dueDate).toISOString() : null
+              }]).then(() => {
+                fetchData();
               });
               setIsModalOpen(false);
             } else {
-              console.log("Save edit:", {
-                editingInvoice,
-                editFullName,
-                editDraft,
-                editStatus,
-                editContact,
-                editEmail,
-                editIssuedDate,
-                editDueDate,
-                editDownPayment,
-                editRepeated,
-                editAddTax,
-                editPercentTax,
-                editInstruction,
-                editMemo,
-                editLineItems,
+              const amount = editLineItems.reduce((acc, curr) => acc + (parseInt(curr.harga) || 0) * (parseInt(curr.quantity) || 1), 0);
+              supabase.from('invoices').update({
+                fullname: editFullName,
+                status: editStatus,
+                amount: amount,
+                due_date: editDueDate ? new Date(editDueDate).toISOString() : null
+              }).eq('id', editingInvoice?.id).then(() => {
+                fetchData();
               });
               setIsEditModalOpen(false);
               setEditingInvoice(null);
@@ -1334,7 +1322,15 @@ export default function InvoiceManual() {
           setDeleteInvoice(null);
         }}
         onConfirm={() => {
-          console.log("Delete invoice:", deleteInvoice?.id);
+          if (deleteInvoice?.id) {
+            supabase
+              .from('invoices')
+              .delete()
+              .eq('id', deleteInvoice.id)
+              .then(() => {
+                fetchData();
+              });
+          }
           setDeleteInvoice(null);
           setDeleteModalOpen(false);
         }}

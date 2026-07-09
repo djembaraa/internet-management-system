@@ -39,14 +39,15 @@ Deno.serve(async (req: Request) => {
 
     let sentCount = 0;
 
-    for (const invoice of invoices) {
+    for (const rawInvoice of invoices) {
+      const invoice = rawInvoice as any;
       const clientEmail = invoice.profiles?.email || "customer@example.com"; 
       
       const emailHtml = `
         <div style="font-family: sans-serif; padding: 20px;">
           <h2 style="color: #155b96;">Peringatan Tagihan: ${invoice.serial}</h2>
           <p>Yth. ${invoice.fullname},</p>
-          <p>Ini adalah pengingat otomatis bahwa Anda memiliki tagihan internet yang belum dibayar sebesar <strong>Rp ${invoice.amount.toLocaleString("id-ID")}</strong>.</p>
+          <p>Ini adalah pengingat otomatis bahwa Anda memiliki tagihan internet yang belum dibayar sebesar <strong>Rp ${Number(invoice.amount).toLocaleString("id-ID")}</strong>.</p>
           <p>Jatuh Tempo: ${invoice.due_date ? new Date(invoice.due_date).toLocaleDateString("id-ID") : '-'}</p>
           <p>Harap segera melakukan pembayaran agar layanan internet Anda tidak terganggu.</p>
           <br/>

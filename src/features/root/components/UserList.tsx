@@ -25,24 +25,25 @@ export default function UserList() {
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchData() {
-      const { data, error } = await supabase.from('profiles').select('*');
-      if (!error && data) {
-        setUsers(data.map(p => ({
-          id: p.id,
-          fullname: p.full_name || p.username,
-          username: p.username,
-          lastLogin: new Date(p.created_at).toLocaleDateString(),
-          packages: p.role,
-          resources: [
-            { icon: Router, label: "Router", used: 1, limit: 1, color: "text-blue-500" },
-            { icon: Users, label: "Client", used: 10, limit: 100, color: "text-emerald-500" },
-            { icon: Ticket, label: "Voucher", used: 50, limit: 1000, color: "text-amber-500" }
-          ]
-        })));
-      }
+  const fetchData = async () => {
+    const { data, error } = await supabase.from('profiles').select('*');
+    if (!error && data) {
+      setUsers(data.map(p => ({
+        id: p.id,
+        fullname: p.full_name || p.username,
+        username: p.username,
+        lastLogin: new Date(p.created_at).toLocaleDateString(),
+        packages: p.role,
+        resources: [
+          { icon: Router, label: "Router", used: 1, limit: 1, color: "text-blue-500" },
+          { icon: Users, label: "Client", used: 10, limit: 100, color: "text-emerald-500" },
+          { icon: Ticket, label: "Voucher", used: 50, limit: 1000, color: "text-amber-500" }
+        ]
+      })));
     }
+  };
+
+  useEffect(() => {
     fetchData();
   }, []);
 
@@ -139,6 +140,56 @@ export default function UserList() {
   const handleDeleteClick = (user: any) => {
     setDeleteUser(user);
     setDeleteOpen(true);
+  };
+
+  const handleSaveUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (addOpen) {
+      // Create user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: addEmail || `${addUsername}@ais.local`,
+        password: addPassword,
+      });
+      if (authError) {
+        alert("Error creating auth user: " + authError.message);
+        return;
+      }
+      const userId = authData?.user?.id;
+      if (userId) {
+        const { error } = await supabase.from('profiles').insert({
+          id: userId,
+          username: addUsername,
+          full_name: addFullname,
+          email: addEmail,
+          role: addPackage === 'root' || addPackage === 'admin' ? addPackage : 'client'
+        });
+        if (error) alert("Error creating profile: " + error.message);
+      }
+    } else if (editOpen && editUser) {
+      // Update profile
+      const { error } = await supabase.from('profiles').update({
+        full_name: editFullname,
+        username: editUsername || undefined,
+        email: editEmail || undefined,
+        role: editPackage === 'root' || editPackage === 'admin' ? editPackage : 'client'
+      }).eq('id', editUser.id);
+      
+      if (error) alert("Error updating profile: " + error.message);
+    }
+    setAddOpen(false);
+    setEditOpen(false);
+    fetchData();
+  };
+
+  const confirmDeleteUser = async () => {
+    if (!deleteUser) return;
+    const { error } = await supabase.from('profiles').delete().eq('id', deleteUser.id);
+    if (error) {
+      alert("Error deleting user: " + error.message);
+    } else {
+      setDeleteOpen(false);
+      fetchData();
+    }
   };
 
   const inputClasses =
@@ -523,17 +574,7 @@ export default function UserList() {
       >
         <form
           className="space-y-6"
-          onSubmit={(e) => {
-            e.preventDefault();
-            console.log("Save:", {
-              fullname: addOpen ? addFullname : editFullname,
-              billingType: addOpen ? addBillingType : editBillingType,
-              discount: addOpen ? addDiscount : editDiscount,
-              taxPercent: addOpen ? addTaxPercent : editTaxPercent,
-            });
-            setAddOpen(false);
-            setEditOpen(false);
-          }}
+          onSubmit={handleSaveUser}
         >
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Section 1: Account Info */}
@@ -916,10 +957,7 @@ export default function UserList() {
           setDeleteOpen(false);
           setDeleteUser(null);
         }}
-        onConfirm={() => {
-          setDeleteUser(null);
-          setDeleteOpen(false);
-        }}
+        onConfirm={confirmDeleteUser}
         itemCount={1}
       />
     </div>

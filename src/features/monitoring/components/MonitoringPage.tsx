@@ -140,6 +140,47 @@ export default function MonitoringPage() {
     setShowAdd(true);
   };
 
+  const handleSaveAdd = async () => {
+    const { error } = await supabase.from('olts').insert([{
+      name: addForm.label,
+      ip: addForm.address,
+      port: Number(addForm.snmpPort),
+      status: 'Active'
+    }]);
+    if (!error) {
+      setShowAdd(false);
+      fetchData();
+    } else {
+      alert("Failed to add OLT: " + error.message);
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editSelectedOlt) return;
+    const { error } = await supabase.from('olts').update({
+      name: editForm.label,
+      ip: editForm.address,
+      port: Number(editForm.snmpPort),
+    }).eq('id', editSelectedOlt);
+    if (!error) {
+      setShowEdit(false);
+      fetchData();
+    } else {
+      alert("Failed to update OLT: " + error.message);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteSelectedOlt) return;
+    const { error } = await supabase.from('olts').delete().eq('id', deleteSelectedOlt);
+    if (!error) {
+      setShowDelete(false);
+      fetchData();
+    } else {
+      alert("Failed to delete OLT: " + error.message);
+    }
+  };
+
   // Sorting for ONU
   type OnuSortKey =
     | "name"
@@ -1119,7 +1160,7 @@ export default function MonitoringPage() {
             {/* Footer */}
             <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-700 flex justify-end">
               <button
-                onClick={() => setShowAdd(false)}
+                onClick={handleSaveAdd}
                 className="px-5 py-2 rounded-lg text-[13px] font-semibold bg-[#155b96] hover:bg-[#0e4a7a] text-white transition-colors flex items-center gap-2"
               >
                 <Save size={14} /> Save changes
@@ -1251,7 +1292,7 @@ export default function MonitoringPage() {
             {/* Footer */}
             <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-700 flex justify-end">
               <button
-                onClick={() => setShowEdit(false)}
+                onClick={handleSaveEdit}
                 className="px-5 py-2 rounded-lg text-[13px] font-semibold bg-[#155b96] hover:bg-[#0e4a7a] text-white transition-colors flex items-center gap-2"
               >
                 <Save size={14} /> Save changes
@@ -1310,7 +1351,7 @@ export default function MonitoringPage() {
                 Cancel
               </button>
               <button
-                onClick={() => setShowDelete(false)}
+                onClick={handleDelete}
                 disabled={!deleteSelectedOlt}
                 className="flex-1 py-2 rounded-lg text-[13px] font-semibold bg-red-500 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed text-white transition-colors"
               >
