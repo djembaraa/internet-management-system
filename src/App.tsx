@@ -1,4 +1,4 @@
-﻿import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { Construction } from "lucide-react";
 
 import Login from "./features/auth/components/Login";
@@ -67,6 +67,14 @@ function RoleDashboard() {
   return <Dashboard />;
 }
 
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { user } = useAuthStore();
+  if (user?.role === "client") {
+    return <Navigate to="/" replace />;
+  }
+  return <>{children}</>;
+}
+
 export default function App() {
   return (
     <Routes>
@@ -76,49 +84,53 @@ export default function App() {
         <Route path="/" element={<Layout />}>
           <Route index element={<RoleDashboard />} />
 
-          {/* Monitoring */}
-          <Route path="monitoring" element={<MonitoringPage />} />
-          <Route path="monitoring/traffic" element={<TrafficPppoeClientPage />} />
+          {/* ADMIN ONLY ROUTES */}
+          <Route element={<AdminRoute><Outlet /></AdminRoute>}>
+            {/* Monitoring */}
+            <Route path="monitoring" element={<MonitoringPage />} />
+            <Route path="monitoring/traffic" element={<TrafficPppoeClientPage />} />
 
-          {/* Router */}
-          <Route path="router" element={<RouterList />} />
+            {/* Router */}
+            <Route path="router" element={<RouterList />} />
 
-          {/* Root: Users */}
-          <Route path="users" element={<UserList />} />
-          <Route path="users/packages" element={<UserPackageList />} />
+            {/* Root: Users */}
+            <Route path="users" element={<UserList />} />
+            <Route path="users/packages" element={<UserPackageList />} />
 
-          {/* PPPoE */}
-          <Route path="pppoe" element={<PppoeProfileList />} />
-          <Route path="pppoe/users" element={<PppoeClientList />} />
+            {/* PPPoE */}
+            <Route path="pppoe" element={<PppoeProfileList />} />
+            <Route path="pppoe/users" element={<PppoeClientList />} />
 
-          {/* Hotspot */}
-          <Route path="hotspot" element={<HotspotProfileList />} />
-          <Route path="hotspot/voucher" element={<HotspotVoucherList />} />
-          <Route path="hotspot/editor" element={<HotspotVoucherEditor />} />
+            {/* Hotspot */}
+            <Route path="hotspot" element={<HotspotProfileList />} />
+            <Route path="hotspot/voucher" element={<HotspotVoucherList />} />
+            <Route path="hotspot/editor" element={<HotspotVoucherEditor />} />
 
-          {/* Invoice */}
-          <Route path="invoice" element={<InvoicePppoe />} />
-          <Route path="invoice/manual" element={<InvoiceManual />} />
+            {/* Invoice */}
+            <Route path="invoice" element={<InvoicePppoe />} />
+            <Route path="invoice/manual" element={<InvoiceManual />} />
 
-          {/* Billing */}
-          <Route path="billing" element={<BillingPage />} />
+            {/* Billing */}
+            <Route path="billing" element={<BillingPage />} />
 
-          {/* Settings */}
-          <Route path="settings/billing" element={<BillingPage />} />
-          <Route path="settings/telegram" element={<TelegramSettings />} />
-          <Route path="settings/whatsapp" element={<WhatsappGateway />} />
-          <Route path="settings/template-invoice" element={<TemplateInvoiceSettings />} />
-          <Route path="settings/payment-gateway" element={<PaymentGatewaySettings />} />
+            {/* Settings */}
+            <Route path="settings/billing" element={<BillingPage />} />
+            <Route path="settings/telegram" element={<TelegramSettings />} />
+            <Route path="settings/whatsapp" element={<WhatsappGateway />} />
+            <Route path="settings/template-invoice" element={<TemplateInvoiceSettings />} />
+            <Route path="settings/payment-gateway" element={<PaymentGatewaySettings />} />
 
-          {/* Accounting */}
-          <Route path="accounting" element={<AccountingPage />} />
+            {/* Accounting */}
+            <Route path="accounting" element={<AccountingPage />} />
 
-          {/* Broadcast */}
-          <Route path="broadcast/all" element={<BroadcastAll />} />
-          <Route path="broadcast/personal" element={<BroadcastPersonal />} />
+            {/* Broadcast */}
+            <Route path="broadcast/all" element={<BroadcastAll />} />
+            <Route path="broadcast/personal" element={<BroadcastPersonal />} />
 
-          <Route path="log" element={<LogList />} />
-          <Route path="ticket" element={<TicketList />} />
+            <Route path="log" element={<LogList />} />
+            <Route path="ticket" element={<TicketList />} />
+          </Route>
+
           <Route path="account" element={<MyAccount />} />
 
           {/* Client-specific routes */}
