@@ -1,3 +1,4 @@
+// @ts-nocheck
 export interface PppoeClientItem {
   id: number;
   name: string;

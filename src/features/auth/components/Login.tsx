@@ -1,6 +1,5 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuthStore } from "../store/authStore";
 import { Lock, User, Eye, EyeOff, X, ShieldCheck, Phone, SendHorizonal } from "lucide-react";
 
 export default function Login() {
