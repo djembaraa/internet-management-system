@@ -76,7 +76,7 @@ export default function HotspotProfileList() {
 
   // Edit modal
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [editProfile, setEditProfile] = useState<HotspotProfile | null>(null);
+  const [editProfile, setEditProfile] = useState<any | null>(null);
   const [editName, setEditName] = useState("");
   const [editPrice, setEditPrice] = useState("");
   const [editLocalProfile, setEditLocalProfile] = useState("");

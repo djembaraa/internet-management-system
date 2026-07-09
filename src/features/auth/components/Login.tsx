@@ -57,7 +57,7 @@ export default function Login() {
     
     try {
       const { supabase } = await import("../../../services/supabase");
-      const { data, error: signUpError } = await supabase.auth.signUp({
+      const { error: signUpError } = await supabase.auth.signUp({
         email: regEmail,
         password: regPassword,
         options: {

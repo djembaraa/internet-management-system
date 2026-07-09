@@ -56,11 +56,11 @@ export default function HotspotVoucherList() {
 
   // Info modal
   const [infoModalOpen, setInfoModalOpen] = useState(false);
-  const [infoVoucher, setInfoVoucher] = useState<Voucher | null>(null);
+  const [infoVoucher, setInfoVoucher] = useState<any | null>(null);
 
   // Delete modal
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [deleteVoucher, setDeleteVoucher] = useState<Voucher | null>(null);
+  const [deleteVoucher, setDeleteVoucher] = useState<any | null>(null);
 
   const [refreshState, setRefreshState] = useState<
     "idle" | "loading" | "success"

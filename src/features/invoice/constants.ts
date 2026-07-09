@@ -4,7 +4,7 @@ export interface InvoiceTableItem {
   description: string;
   date: string;
   amount: string;
-  status: "Paid" | "Unpaid";
+  status: string;
 }
 
 export interface InvoicePppoeItem {

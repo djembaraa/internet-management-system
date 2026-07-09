@@ -51,7 +51,7 @@ function ToggleSwitch({
 }
 
 export default function UserPackageList() {
-  const [packages, setPackages] = useState<UserPackage[]>([]);
+  const [packages] = useState<UserPackage[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedId, setExpandedId] = useState<number | null>(null);
 

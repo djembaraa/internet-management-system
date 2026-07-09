@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "../../../services/supabase";
 import { useAuthStore } from "../../auth/store/authStore";
-import { X, Send, User, ShieldCheck } from "lucide-react";
+import { Send, ShieldCheck } from "lucide-react";
 import Modal from "../../../components/Modal";
 import { clsx } from "clsx";
 
@@ -43,7 +43,7 @@ export default function TicketChatModal({
           schema: 'public', 
           table: 'ticket_messages',
           filter: `ticket_id=eq.${ticketId}` 
-        }, (payload) => {
+        }, () => {
           fetchMessages(); // re-fetch to get user details joined
         })
         .subscribe();

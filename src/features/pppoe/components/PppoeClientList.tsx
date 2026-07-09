@@ -26,7 +26,6 @@ import ColumnToggle, {
   type ColDef,
   initVisible,
 } from "../../../components/ColumnToggle";
-import type { PppoeClientItem } from "../constants";
 
 const PPPOE_CLIENT_COLS: ColDef[] = [
   { key: "name", label: "Username (Name)" },
@@ -965,10 +964,7 @@ export default function PppoeClientList() {
           setDeleteModalOpen(false);
           setDeleteClientId(null);
         }}
-        onConfirm={() => {
-          console.log("Delete client:", deleteClientId);
-          setDeleteClientId(null);
-        }}
+        onConfirm={handleDeleteConfirm}
         itemCount={1}
       />
 

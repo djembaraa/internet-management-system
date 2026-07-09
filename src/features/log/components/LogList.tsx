@@ -274,7 +274,7 @@ export default function LogList() {
                         Topics
                       </p>
                       <div className="flex flex-wrap gap-1.5">
-                        {log.topics.split(",").map((t) => (
+                        {log.topics.split(",").map((t: string) => (
                           <span
                             key={t}
                             className="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
@@ -383,7 +383,7 @@ export default function LogList() {
                   {visibleCols["topics"] !== false && (
                     <td className="px-5 py-3.5">
                       <div className="flex gap-1.5 flex-wrap">
-                        {log.topics.split(",").map((t) => (
+                        {log.topics.split(",").map((t: string) => (
                           <span
                             key={t}
                             className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700"

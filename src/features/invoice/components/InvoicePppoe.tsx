@@ -120,7 +120,7 @@ export default function InvoicePppoe() {
     const { data: cData } = await supabase.from('profiles').select('*').eq('role', 'client');
     if (cData) setClients(cData);
 
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('invoices')
       .select('*, profiles(username)')
       .eq('type', 'PPPoE')

@@ -59,8 +59,8 @@ export default function RouterList() {
         port: d.api_port,
         user: d.username,
         secret: d.password,
-        vpn: d.vpn_status ? { ip: d.ip_address, is_connected: true } : undefined,
-      }));
+        vpn: d.vpn_status ? { ip: d.ip_address, is_connected: 1 } : { is_connected: 0 },
+      }) as any);
       setRouters(formattedData);
     }
   };

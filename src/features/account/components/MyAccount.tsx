@@ -71,7 +71,7 @@ export default function MyAccount() {
   const [confirmPassword, setConfirmPassword] = useState("");
 
   /* ─── Sub Account state ─── */
-  const [subAccounts, setSubAccounts] = useState<SubAccount[]>([]);
+  const [subAccounts] = useState<SubAccount[]>([]);
   const [addUserOpen, setAddUserOpen] = useState(false);
   const [addUsername, setAddUsername] = useState("");
   const [addPassword, setAddPassword] = useState("");

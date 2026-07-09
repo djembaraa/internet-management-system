@@ -75,7 +75,7 @@ export default function UserList() {
 
   // Edit modal state
   const [editOpen, setEditOpen] = useState(false);
-  const [, setEditUser] = useState<any | null>(null);
+  const [editUser, setEditUser] = useState<any | null>(null);
   const [editFullname, setEditFullname] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [editUsername, setEditUsername] = useState("");
@@ -98,7 +98,7 @@ export default function UserList() {
 
   // Delete modal
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [, setDeleteUser] = useState<any | null>(null);
+  const [deleteUser, setDeleteUser] = useState<any | null>(null);
 
   const filtered = users.filter(
     (u) =>
@@ -376,7 +376,7 @@ export default function UserList() {
                           Usage Resources
                         </p>
                         <div className="flex flex-row flex-wrap gap-2">
-                          {user.resources.map((res, i) => (
+                          {user.resources.map((res: any, i: number) => (
                             <div
                               key={i}
                               className="inline-flex items-center gap-2 bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-100 dark:border-slate-800"
@@ -490,7 +490,7 @@ export default function UserList() {
                     </td>
                     <td className="px-5 py-3.5">
                       <div className="flex flex-row flex-wrap gap-2">
-                        {user.resources.map((res, i) => (
+                        {user.resources.map((res: any, i: number) => (
                           <div
                             key={i}
                             className="inline-flex items-center gap-1.5 p-1.5 pr-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800 w-fit"
@@ -900,7 +900,7 @@ export default function UserList() {
                 Statistik Penggunaan
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {infoUser.resources.map((res) => {
+                {infoUser.resources.map((res: any) => {
                   const Icon = res.icon;
                   return (
                     <div

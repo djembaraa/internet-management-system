@@ -90,6 +90,7 @@ export default function InvoiceManual() {
     if (data) {
       setInvoices(data.map(i => ({
         id: i.id,
+        username: i.fullname || i.client_id || "Unknown",
         fullname: i.fullname || i.client_id || "Unknown",
         description: i.type === 'Manual' ? 'Manual Invoice' : "Monthly Internet Bill",
         date: new Date(i.created_at).toLocaleDateString(),
