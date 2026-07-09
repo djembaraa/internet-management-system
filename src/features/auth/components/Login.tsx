@@ -124,13 +124,33 @@ export default function Login() {
     try {
       const { supabase } = await import("../../../services/supabase");
       const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email: username, // Assuming 'username' state holds the email for Supabase Auth
+        email: username,
         password: password,
       });
 
       if (authError) throw authError;
 
-      if (data.session) {
+      if (data.user) {
+        // Cek role asli dari tabel profiles
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', data.user.id)
+          .single();
+          
+        const actualRole = profile?.role || data.user.user_metadata?.role || "client";
+
+        // Validasi apakah tab yang dipilih sesuai dengan role asli
+        if (isAdmin && actualRole === "client") {
+          await supabase.auth.signOut();
+          throw new Error("Akses ditolak: Akun ini adalah Klien. Silakan gunakan tab 'Client Login'.");
+        }
+        
+        if (!isAdmin && (actualRole === "admin" || actualRole === "root")) {
+          await supabase.auth.signOut();
+          throw new Error("Akses ditolak: Akun ini adalah Admin. Silakan gunakan tab 'Admin Login'.");
+        }
+
         navigate("/");
       }
     } catch (err: any) {
